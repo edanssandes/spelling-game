@@ -188,6 +188,10 @@ select:focus {
   margin-top: 8px;
 }
 
+#startGameBtn {
+  margin-top: 10px;
+}
+
 .back-btn {
   padding: 8px 12px;
   font-size: 0.9rem;
@@ -312,13 +316,16 @@ select:focus {
   width: var(--slot-size);
   height: var(--slot-size);
   border-radius: 12px;
-  font-size: clamp(1rem, calc(var(--slot-size) * 0.42), 1.7rem);
+  font-size: clamp(0.82rem, calc(var(--slot-size) * 0.38), 1.55rem);
   font-weight: 800;
   text-transform: uppercase;
+  line-height: calc(var(--slot-size) - 4px);
+}
+
+.slot {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  line-height: 1;
 }
 
 .slot {
@@ -331,10 +338,18 @@ select:focus {
   margin: 0;
   padding: 0;
   min-width: 0;
+  width: var(--slot-size);
+  height: var(--slot-size);
+  display: block;
   text-align: center;
-  line-height: 1;
   -webkit-appearance: none;
   appearance: none;
+}
+
+.letter-input:focus {
+  outline: none;
+  box-shadow: none;
+  border-color: #5f8fff;
 }
 
 .letter-input.correct {
@@ -366,8 +381,14 @@ select:focus {
 }
 
 .feedback {
-  min-height: 1.6em;
+  min-height: 1.1em;
+  margin: 8px 0 0;
   font-weight: 800;
+}
+
+.feedback:empty {
+  min-height: 0;
+  margin-top: 4px;
 }
 
 .feedback.ok {
@@ -510,6 +531,14 @@ body.tight-space .actions .btn {
   min-width: 86px;
   padding: 8px 12px;
   font-size: 0.9rem;
+}
+
+body.tight-space .feedback {
+  margin-top: 4px;
+}
+
+body.tight-space .feedback:empty {
+  margin-top: 2px;
 }
 
 body.tight-space .back-btn {
