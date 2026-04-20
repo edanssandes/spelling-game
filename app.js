@@ -38,13 +38,73 @@ const state = {
   currentQueueIndex: -1,
   currentWord: "",
   wordStats: {},
+  bgmAudio: null,
+  bgmStarted: false,
   mask: [],
   isLocked: false,
   speechVoice: null,
   utteranceRate: 0.88
 };
 
+const SOUND_PATHS = {
+  start: "sounds/start.mp3",
+  success: "sounds/success.mp3",
+  error: "sounds/error.mp3",
+  applause: "sounds/applause.mp3",
+  bgm: "sounds/bgm.mp3"
+};
+
+const SOUND_VOLUMES = {
+  start: 0.35,
+  success: 0.4,
+  error: 0.32,
+  applause: 0.42,
+  bgm: 0.15
+};
+
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function playSfx(name) {
+  const src = SOUND_PATHS[name];
+  if (!src) {
+    return;
+  }
+
+  const sfx = new Audio(src);
+  sfx.volume = SOUND_VOLUMES[name] ?? 0.35;
+  sfx.play().catch(() => {});
+}
+
+function startBackgroundMusic() {
+  if (!state.bgmAudio) {
+    const audio = new Audio(SOUND_PATHS.bgm);
+    audio.loop = true;
+    audio.preload = "auto";
+    audio.volume = SOUND_VOLUMES.bgm;
+    state.bgmAudio = audio;
+  }
+
+  if (state.bgmStarted) {
+    return;
+  }
+
+  state.bgmAudio.currentTime = 0;
+  state.bgmAudio.play().then(() => {
+    state.bgmStarted = true;
+  }).catch(() => {
+    state.bgmStarted = false;
+  });
+}
+
+function stopBackgroundMusic() {
+  if (!state.bgmAudio) {
+    return;
+  }
+
+  state.bgmAudio.pause();
+  state.bgmAudio.currentTime = 0;
+  state.bgmStarted = false;
+}
 
 function normalizeWord(raw) {
   return raw
@@ -548,6 +608,7 @@ async function loadNextWord() {
 }
 
 async function celebrateRoundClear() {
+  playSfx("applause");
   showFeedback("Excelente! Rodada completa!", "ok");
   await playFireworks(1900);
   showFeedback("Pronto para a próxima rodada!", "ok");
@@ -572,6 +633,7 @@ async function handleSubmit() {
   }
 
   if (typed.toLowerCase() === target.toLowerCase()) {
+    playSfx("success");
     recordWordAttempt(target, typed, true);
     showFeedback("Boa! Você acertou!", "ok");
     if (state.currentQueueIndex >= 0) {
@@ -586,6 +648,7 @@ async function handleSubmit() {
   }
 
   setLocked(true);
+  playSfx("error");
   recordWordAttempt(target, typed, false);
   markWrongLetters(target);
   showFeedback("Ops! Tente de novo depois do terremoto!", "error");
@@ -640,6 +703,8 @@ function startGame() {
   state.roundNumber = 1;
   state.wordsPerRound = 4;
 
+  playSfx("start");
+  startBackgroundMusic();
   setPanel(true);
   startRound();
 }
@@ -673,6 +738,7 @@ function attachEvents() {
     setLocked(false);
     setPanel(false);
     showFeedback("");
+    stopBackgroundMusic();
   });
 
   DOM.wordSlots.addEventListener("keydown", (e) => {
