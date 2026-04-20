@@ -383,6 +383,8 @@ select:focus {
   place-items: center;
   padding: 14px;
   background: rgba(20, 31, 54, 0.55);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .stats-modal[hidden] {
@@ -391,8 +393,7 @@ select:focus {
 
 .stats-panel {
   width: min(760px, 100%);
-  max-height: min(80dvh, 700px);
-  overflow: auto;
+  margin: auto;
   background: #fffdf8;
   border: 2px solid #dbe7f8;
   border-radius: 16px;
@@ -424,14 +425,14 @@ select:focus {
 
 .stats-list {
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .stats-row {
   border: 2px solid #dde7f5;
-  border-radius: 12px;
+  border-radius: 10px;
   background: #fff;
-  padding: 9px 10px;
+  padding: 7px 9px;
 }
 
 .stats-row-top {
@@ -443,24 +444,21 @@ select:focus {
 
 .stats-word {
   font-family: "Baloo 2", cursive;
-  font-size: 1.08rem;
+  font-size: 1rem;
   text-transform: uppercase;
 }
 
-.stats-rate {
+.stats-summary {
   font-weight: 800;
   color: #265c9c;
-}
-
-.stats-meta {
-  margin-top: 4px;
-  font-size: 0.9rem;
-  opacity: 0.92;
+  font-size: 0.84rem;
+  white-space: nowrap;
 }
 
 .stats-wrong {
-  margin-top: 5px;
-  font-size: 0.9rem;
+  margin-top: 2px;
+  font-size: 0.8rem;
+  line-height: 1.25;
   color: #963535;
 }
 
@@ -625,7 +623,13 @@ body.tight-space .stats-btn {
   }
 
   .stats-row {
-    padding: 8px;
+    padding: 7px;
+  }
+
+  .stats-summary {
+    font-size: 0.78rem;
+    white-space: normal;
+    text-align: right;
   }
 }
 

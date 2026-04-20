@@ -367,18 +367,14 @@ function renderStatsList() {
     wordEl.className = "stats-word";
     wordEl.textContent = word;
 
-    const rateEl = document.createElement("span");
-    rateEl.className = "stats-rate";
-    rateEl.textContent = `${Math.round(rate)}%`;
+    const wrongCount = data.attempts - data.correct;
+    const summaryEl = document.createElement("span");
+    summaryEl.className = "stats-summary";
+    summaryEl.textContent = `${Math.round(rate)}% • ${data.correct}/${data.attempts} • erros: ${wrongCount}`;
 
     top.appendChild(wordEl);
-    top.appendChild(rateEl);
+    top.appendChild(summaryEl);
     row.appendChild(top);
-
-    const meta = document.createElement("div");
-    meta.className = "stats-meta";
-    meta.textContent = `${data.correct}/${data.attempts} acertos`;
-    row.appendChild(meta);
 
     if (data.wrongSpellings.size) {
       const wrong = document.createElement("div");
