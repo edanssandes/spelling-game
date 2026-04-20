@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spelling Game Kids</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="bg-orb orb-a"></div>
+  <div class="bg-orb orb-b"></div>
+  <div class="bg-pattern"></div>
+
+  <main class="app-shell">
+    <header class="topbar">
+      <h1>Spelling Game Kids</h1>
+      <p>Ouça, complete a palavra e avance de rodada.</p>
+    </header>
+
+    <section id="setupPanel" class="panel active">
+      <h2>Começar</h2>
+      <div class="grid two">
+        <label class="field">
+          <span>Nome do jogador</span>
+          <input id="playerName" type="text" maxlength="32" placeholder="Ex: Alice">
+        </label>
+
+        <label class="field">
+          <span>Dificuldade</span>
+          <select id="difficulty">
+            <option value="easy">Fácil</option>
+            <option value="medium" selected>Médio</option>
+            <option value="hard">Difícil</option>
+          </select>
+        </label>
+      </div>
+
+      <label class="field">
+        <span>Tema</span>
+        <select id="themeSelect"></select>
+      </label>
+
+      <button id="startGameBtn" class="btn primary">Iniciar Jogo</button>
+      <p id="setupError" class="setup-error" hidden></p>
+    </section>
+
+    <section id="gamePanel" class="panel">
+      <div class="hud">
+        <div class="pill"><span>Jogador:</span> <strong id="hudPlayer">-</strong></div>
+        <div class="pill"><span>Tema:</span> <strong id="hudTheme">-</strong></div>
+        <div class="pill"><span>Rodada:</span> <strong id="hudRound">1</strong></div>
+        <div class="pill"><span>Palavras:</span> <strong id="hudWordCount">4</strong></div>
+      </div>
+
+      <div id="wordCard" class="word-card">
+        <h2 id="promptTitle">Ouça e complete:</h2>
+        <button id="playAudioBtn" class="btn sound">Ouvir palavra</button>
+
+        <div id="wordSlots" class="word-slots"></div>
+
+        <div class="actions">
+          <button id="submitBtn" class="btn primary">Confirmar</button>
+          <button id="clearBtn" class="btn ghost">Limpar</button>
+        </div>
+
+        <p id="feedback" class="feedback"></p>
+      </div>
+
+      <div class="game-actions">
+        <button id="backToMenuBtn" class="btn ghost">Voltar ao menu</button>
+      </div>
+    </section>
+  </main>
+
+  <canvas id="fxCanvas" aria-hidden="true"></canvas>
+
+  <!-- Temas: adicione um novo <script> aqui para incluir mais temas -->
+  <script src="themes/init.js"></script>
+  <script src="themes/animals.js"></script>
+  <script src="themes/food.js"></script>
+  <script src="themes/sb01a.js"></script>
+  <script src="themes/sb01b.js"></script>
+  <script src="themes/school.js"></script>
+  <script src="themes/sports.js"></script>
+
+  <script src="app.js"></script>
+</body>
+</html>
