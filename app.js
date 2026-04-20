@@ -387,6 +387,7 @@ function closeStatsModal() {
 function showFeedback(text, kind = "") {
   DOM.feedback.textContent = text;
   DOM.feedback.className = `feedback ${kind}`.trim();
+  DOM.feedback.classList.toggle("has-text", Boolean(text));
 }
 
 async function playWordAudio(word) {

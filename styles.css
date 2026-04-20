@@ -189,7 +189,8 @@ select:focus {
 }
 
 #startGameBtn {
-  margin-top: 10px;
+  display: block;
+  margin-top: 12px;
 }
 
 .back-btn {
@@ -381,14 +382,15 @@ select:focus {
 }
 
 .feedback {
-  min-height: 1.1em;
-  margin: 8px 0 0;
+  display: none;
+  margin: 0;
   font-weight: 800;
 }
 
-.feedback:empty {
-  min-height: 0;
-  margin-top: 4px;
+.feedback.has-text {
+  display: block;
+  min-height: 1.1em;
+  margin-top: 6px;
 }
 
 .feedback.ok {
@@ -534,11 +536,11 @@ body.tight-space .actions .btn {
 }
 
 body.tight-space .feedback {
-  margin-top: 4px;
+  margin-top: 0;
 }
 
-body.tight-space .feedback:empty {
-  margin-top: 2px;
+body.tight-space .feedback.has-text {
+  margin-top: 4px;
 }
 
 body.tight-space .back-btn {
@@ -630,6 +632,10 @@ body.tight-space .stats-btn {
   .actions .btn {
     min-width: 92px;
     padding: 9px 13px;
+  }
+
+  #startGameBtn {
+    margin-top: 14px;
   }
 
   .pill {
