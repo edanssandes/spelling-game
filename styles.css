@@ -312,12 +312,13 @@ select:focus {
   width: var(--slot-size);
   height: var(--slot-size);
   border-radius: 12px;
-  font-size: clamp(1rem, calc(var(--slot-size) * 0.45), 1.8rem);
+  font-size: clamp(1rem, calc(var(--slot-size) * 0.42), 1.7rem);
   font-weight: 800;
   text-transform: uppercase;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  line-height: 1;
 }
 
 .slot {
@@ -327,7 +328,13 @@ select:focus {
 
 .letter-input {
   border: 2px dashed #7ea8ff;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
   text-align: center;
+  line-height: 1;
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .letter-input.correct {
