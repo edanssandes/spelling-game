@@ -75,10 +75,6 @@ body {
   padding: 18px;
 }
 
-.landscape-blocker {
-  display: none;
-}
-
 .topbar {
   text-align: center;
   margin-bottom: 14px;
@@ -633,40 +629,3 @@ body.tight-space .stats-btn {
   }
 }
 
-@media (max-width: 760px) and (orientation: landscape) {
-  .landscape-blocker {
-    position: fixed;
-    inset: 0;
-    z-index: 20;
-    display: grid;
-    place-items: center;
-    background: rgba(24, 37, 64, 0.92);
-    color: #fff;
-    text-align: center;
-    padding: 16px;
-  }
-
-  .landscape-inner {
-    background: rgba(255, 255, 255, 0.12);
-    border: 1px solid rgba(255, 255, 255, 0.28);
-    border-radius: 16px;
-    padding: 14px 16px;
-    max-width: 320px;
-  }
-
-  .landscape-inner strong {
-    display: block;
-    font-size: 1.15rem;
-    margin-bottom: 4px;
-  }
-
-  .landscape-inner p {
-    margin: 0;
-  }
-
-  .app-shell,
-  .bg-pattern,
-  .bg-orb {
-    visibility: hidden;
-  }
-}

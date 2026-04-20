@@ -106,18 +106,6 @@ function updateSlotSize(wordLength = 0) {
   DOM.wordSlots.style.setProperty("--slot-gap", `${gap}px`);
 }
 
-async function requestPortraitLock() {
-  if (!isLikelyMobile() || !window.screen?.orientation?.lock) {
-    return;
-  }
-
-  try {
-    await window.screen.orientation.lock("portrait");
-  } catch (_) {
-    // Some browsers only allow orientation lock in fullscreen/PWA.
-  }
-}
-
 function updateThemeSelect() {
   const current = state.selectedTheme;
   DOM.themeSelect.innerHTML = "";
@@ -638,7 +626,6 @@ function startGame() {
   state.roundNumber = 1;
   state.wordsPerRound = 4;
 
-  requestPortraitLock();
   setPanel(true);
   startRound();
 }
