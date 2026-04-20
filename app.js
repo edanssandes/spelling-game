@@ -8,15 +8,20 @@ const DOM = {
   hudPlayer: document.getElementById("hudPlayer"),
   hudTheme: document.getElementById("hudTheme"),
   hudRound: document.getElementById("hudRound"),
-  hudWordCount: document.getElementById("hudWordCount"),
+  roundDots: document.getElementById("roundDots"),
+  statsBtn: document.getElementById("statsBtn"),
   playAudioBtn: document.getElementById("playAudioBtn"),
   wordSlots: document.getElementById("wordSlots"),
   submitBtn: document.getElementById("submitBtn"),
   clearBtn: document.getElementById("clearBtn"),
   feedback: document.getElementById("feedback"),
+  statsModal: document.getElementById("statsModal"),
+  statsList: document.getElementById("statsList"),
+  closeStatsBtn: document.getElementById("closeStatsBtn"),
   wordCard: document.getElementById("wordCard"),
   backToMenuBtn: document.getElementById("backToMenuBtn"),
-  fxCanvas: document.getElementById("fxCanvas")
+  fxCanvas: document.getElementById("fxCanvas"),
+  appShell: document.querySelector(".app-shell")
 };
 
 const state = {
@@ -27,9 +32,12 @@ const state = {
   roundNumber: 1,
   wordsPerRound: 4,
   roundBaseWords: [],
+  roundWordStatuses: [],
   queue: [],
-  solvedInRound: new Set(),
+  queueIndexMap: [],
+  currentQueueIndex: -1,
   currentWord: "",
+  wordStats: {},
   mask: [],
   isLocked: false,
   speechVoice: null,
@@ -58,6 +66,56 @@ function shuffle(arr) {
 function setPanel(showGame) {
   DOM.setupPanel.classList.toggle("active", !showGame);
   DOM.gamePanel.classList.toggle("active", showGame);
+  updateCompactMode();
+}
+
+function isLikelyMobile() {
+  return window.matchMedia("(max-width: 760px)").matches;
+}
+
+function updateCompactMode() {
+  const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+  const keyboardLikelyOpen = window.visualViewport
+    ? window.innerHeight - window.visualViewport.height > 130
+    : false;
+  const tightByHeight = viewportHeight < 660;
+  const shouldCompact = isLikelyMobile() && (tightByHeight || keyboardLikelyOpen);
+  document.body.classList.toggle("tight-space", shouldCompact);
+}
+
+function handleViewportResize() {
+  updateCompactMode();
+  updateSlotSize();
+}
+
+function updateSlotSize(wordLength = 0) {
+  if (!DOM.wordSlots) {
+    return;
+  }
+
+  const slots = Math.max(1, wordLength || DOM.wordSlots.children.length || 1);
+  const containerWidth = DOM.wordCard ? DOM.wordCard.clientWidth : window.innerWidth;
+  const maxSlotsInRow = isLikelyMobile() ? Math.min(slots, 8) : Math.min(slots, 10);
+  const gap = Math.max(6, Math.min(10, Math.floor(containerWidth * 0.018)));
+  const horizontalPadding = isLikelyMobile() ? 20 : 28;
+  const usableWidth = Math.max(240, containerWidth - horizontalPadding);
+  const computed = Math.floor((usableWidth - (maxSlotsInRow - 1) * gap) / maxSlotsInRow);
+  const size = Math.max(34, Math.min(58, computed));
+
+  DOM.wordSlots.style.setProperty("--slot-size", `${size}px`);
+  DOM.wordSlots.style.setProperty("--slot-gap", `${gap}px`);
+}
+
+async function requestPortraitLock() {
+  if (!isLikelyMobile() || !window.screen?.orientation?.lock) {
+    return;
+  }
+
+  try {
+    await window.screen.orientation.lock("portrait");
+  } catch (_) {
+    // Some browsers only allow orientation lock in fullscreen/PWA.
+  }
 }
 
 function updateThemeSelect() {
@@ -157,6 +215,7 @@ function buildMask(word, difficulty) {
 
 function renderWordInputs(word, mask) {
   DOM.wordSlots.innerHTML = "";
+  updateSlotSize(word.length);
 
   for (let i = 0; i < word.length; i += 1) {
     if (mask[i]) {
@@ -191,6 +250,7 @@ function onLetterInput(e) {
   const target = e.target;
   target.value = target.value.replace(/[^a-zA-Z]/g, "").slice(0, 1).toUpperCase();
   target.classList.remove("wrong", "correct");
+  updateSubmitVisibility();
 
   if (target.value) {
     const all = [...DOM.wordSlots.querySelectorAll(".letter-input")];
@@ -227,6 +287,117 @@ function getTypedWord() {
     }
   }
   return chars.join("");
+}
+
+function isWordComplete() {
+  const inputs = [...DOM.wordSlots.querySelectorAll(".letter-input")];
+  if (!inputs.length) {
+    return false;
+  }
+  return inputs.every((el) => Boolean(el.value.trim()));
+}
+
+function updateSubmitVisibility() {
+  const canSubmit = !state.isLocked && isWordComplete();
+  DOM.submitBtn.hidden = !canSubmit;
+}
+
+function ensureWordStats(word) {
+  if (!state.wordStats[word]) {
+    state.wordStats[word] = {
+      attempts: 0,
+      correct: 0,
+      wrongSpellings: new Set()
+    };
+  }
+  return state.wordStats[word];
+}
+
+function recordWordAttempt(word, typed, isCorrect) {
+  const stat = ensureWordStats(word);
+  stat.attempts += 1;
+  if (isCorrect) {
+    stat.correct += 1;
+    return;
+  }
+
+  const wrong = (typed || "").trim().toLowerCase();
+  if (wrong && wrong !== word) {
+    stat.wrongSpellings.add(wrong);
+  }
+}
+
+function renderStatsList() {
+  if (!DOM.statsList) {
+    return;
+  }
+
+  const rows = Object.entries(state.wordStats)
+    .map(([word, data]) => {
+      const rate = data.attempts > 0 ? (data.correct / data.attempts) * 100 : 0;
+      return { word, data, rate };
+    })
+    .sort((a, b) => {
+      if (b.rate !== a.rate) {
+        return b.rate - a.rate;
+      }
+      if (b.data.attempts !== a.data.attempts) {
+        return b.data.attempts - a.data.attempts;
+      }
+      return a.word.localeCompare(b.word);
+    });
+
+  DOM.statsList.innerHTML = "";
+  if (!rows.length) {
+    const empty = document.createElement("div");
+    empty.className = "stats-empty";
+    empty.textContent = "Ainda não há palavras jogadas.";
+    DOM.statsList.appendChild(empty);
+    return;
+  }
+
+  rows.forEach(({ word, data, rate }) => {
+    const row = document.createElement("article");
+    row.className = "stats-row";
+
+    const top = document.createElement("div");
+    top.className = "stats-row-top";
+
+    const wordEl = document.createElement("strong");
+    wordEl.className = "stats-word";
+    wordEl.textContent = word;
+
+    const rateEl = document.createElement("span");
+    rateEl.className = "stats-rate";
+    rateEl.textContent = `${Math.round(rate)}%`;
+
+    top.appendChild(wordEl);
+    top.appendChild(rateEl);
+    row.appendChild(top);
+
+    const meta = document.createElement("div");
+    meta.className = "stats-meta";
+    meta.textContent = `${data.correct}/${data.attempts} acertos`;
+    row.appendChild(meta);
+
+    if (data.wrongSpellings.size) {
+      const wrong = document.createElement("div");
+      wrong.className = "stats-wrong";
+      wrong.textContent = `Grafias erradas: ${[...data.wrongSpellings].map((w) => w.toUpperCase()).join(", ")}`;
+      row.appendChild(wrong);
+    }
+
+    DOM.statsList.appendChild(row);
+  });
+}
+
+function openStatsModal() {
+  renderStatsList();
+  DOM.statsModal.hidden = false;
+}
+
+function closeStatsModal() {
+  DOM.statsModal.hidden = true;
 }
 
 function showFeedback(text, kind = "") {
@@ -280,6 +451,7 @@ function setLocked(locked) {
   DOM.wordSlots.querySelectorAll(".letter-input").forEach((el) => {
     el.disabled = locked;
   });
+  updateSubmitVisibility();
 }
 
 function markWrongLetters(targetWord) {
@@ -302,13 +474,38 @@ function revealCorrectWord(word) {
     slot.textContent = ch.toUpperCase();
     DOM.wordSlots.appendChild(slot);
   }
+  updateSubmitVisibility();
+}
+
+function renderRoundDots() {
+  if (!DOM.roundDots) {
+    return;
+  }
+
+  DOM.roundDots.innerHTML = "";
+  state.roundWordStatuses.forEach((status, idx) => {
+    const dot = document.createElement("span");
+    dot.className = "round-dot";
+    if (status === "done") {
+      dot.classList.add("done");
+    } else if (status === "failed") {
+      dot.classList.add("failed");
+    }
+    dot.setAttribute("role", "img");
+    dot.setAttribute("aria-label", `Palavra ${idx + 1}: ${status}`);
+    DOM.roundDots.appendChild(dot);
+  });
+}
+
+function allRoundWordsSolved() {
+  return state.roundWordStatuses.length > 0 && state.roundWordStatuses.every((status) => status === "done");
 }
 
 function updateHud() {
   DOM.hudPlayer.textContent = state.playerName;
   DOM.hudTheme.textContent = state.selectedTheme;
   DOM.hudRound.textContent = String(state.roundNumber);
-  DOM.hudWordCount.textContent = String(state.wordsPerRound);
+  renderRoundDots();
 }
 
 function nextWordsPerRound() {
@@ -323,7 +520,9 @@ async function startRound() {
   const words = state.themes[state.selectedTheme] || [];
   state.roundBaseWords = chooseWordsForRound(words, state.wordsPerRound);
   state.queue = [...state.roundBaseWords];
-  state.solvedInRound = new Set();
+  state.queueIndexMap = state.roundBaseWords.map((_, idx) => idx);
+  state.roundWordStatuses = state.roundBaseWords.map(() => "pending");
+  state.currentQueueIndex = -1;
   updateHud();
   await loadNextWord();
 }
@@ -332,7 +531,7 @@ async function loadNextWord() {
   showFeedback("");
 
   if (state.queue.length === 0) {
-    if (state.solvedInRound.size >= state.roundBaseWords.length) {
+    if (allRoundWordsSolved()) {
       await celebrateRoundClear();
       state.roundNumber += 1;
       nextWordsPerRound();
@@ -341,7 +540,9 @@ async function loadNextWord() {
     }
   }
 
+  state.currentQueueIndex = state.queueIndexMap.shift();
   state.currentWord = state.queue.shift();
+  ensureWordStats(state.currentWord);
   state.mask = buildMask(state.currentWord, state.difficulty);
   renderWordInputs(state.currentWord, state.mask);
   setLocked(false);
@@ -373,8 +574,12 @@ async function handleSubmit() {
   }
 
   if (typed.toLowerCase() === target.toLowerCase()) {
+    recordWordAttempt(target, typed, true);
     showFeedback("Boa! Você acertou!", "ok");
-    state.solvedInRound.add(target);
+    if (state.currentQueueIndex >= 0) {
+      state.roundWordStatuses[state.currentQueueIndex] = "done";
+      renderRoundDots();
+    }
     revealCorrectWord(target);
     setLocked(true);
     await wait(650);
@@ -383,9 +588,15 @@ async function handleSubmit() {
   }
 
   setLocked(true);
+  recordWordAttempt(target, typed, false);
   markWrongLetters(target);
   showFeedback("Ops! Tente de novo depois do terremoto!", "error");
+  if (state.currentQueueIndex >= 0 && state.roundWordStatuses[state.currentQueueIndex] !== "done") {
+    state.roundWordStatuses[state.currentQueueIndex] = "failed";
+    renderRoundDots();
+  }
   state.queue.push(target);
+  state.queueIndexMap.push(state.currentQueueIndex);
 
   DOM.wordCard.classList.add("earthquake");
   await wait(700);
@@ -406,6 +617,7 @@ function clearInputs() {
   if (first) {
     first.focus();
   }
+  updateSubmitVisibility();
   showFeedback("");
 }
 
@@ -430,6 +642,7 @@ function startGame() {
   state.roundNumber = 1;
   state.wordsPerRound = 4;
 
+  requestPortraitLock();
   setPanel(true);
   startRound();
 }
@@ -451,6 +664,14 @@ function attachEvents() {
   DOM.submitBtn.addEventListener("click", handleSubmit);
   DOM.clearBtn.addEventListener("click", clearInputs);
 
+  DOM.statsBtn.addEventListener("click", openStatsModal);
+  DOM.closeStatsBtn.addEventListener("click", closeStatsModal);
+  DOM.statsModal.addEventListener("click", (e) => {
+    if (e.target === DOM.statsModal) {
+      closeStatsModal();
+    }
+  });
+
   DOM.backToMenuBtn.addEventListener("click", () => {
     setLocked(false);
     setPanel(false);
@@ -460,6 +681,12 @@ function attachEvents() {
   DOM.wordSlots.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
       handleSubmit();
+    }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !DOM.statsModal.hidden) {
+      closeStatsModal();
     }
   });
 
@@ -476,6 +703,7 @@ function resizeCanvas() {
   DOM.fxCanvas.height = Math.floor(window.innerHeight * dpr);
   const ctx = DOM.fxCanvas.getContext("2d");
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  handleViewportResize();
 }
 
 function randomBetween(min, max) {
@@ -551,7 +779,11 @@ function init() {
   attachEvents();
   resizeCanvas();
   window.addEventListener("resize", resizeCanvas);
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", handleViewportResize);
+  }
   state.speechVoice = chooseEnglishVoice();
+  handleViewportResize();
 }
 
 init();

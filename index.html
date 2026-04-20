@@ -10,6 +10,13 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <div id="landscapeBlocker" class="landscape-blocker" aria-live="polite">
+    <div class="landscape-inner">
+      <strong>Use na vertical</strong>
+      <p>Gire o celular para continuar jogando.</p>
+    </div>
+  </div>
+
   <div class="bg-orb orb-a"></div>
   <div class="bg-orb orb-b"></div>
   <div class="bg-pattern"></div>
@@ -49,15 +56,22 @@
 
     <section id="gamePanel" class="panel">
       <div class="hud">
+        <button id="backToMenuBtn" class="btn ghost back-btn">← Menu</button>
+        <button id="statsBtn" class="btn ghost stats-btn" aria-label="Abrir estatísticas">◔ Stats</button>
         <div class="pill"><span>Jogador:</span> <strong id="hudPlayer">-</strong></div>
         <div class="pill"><span>Tema:</span> <strong id="hudTheme">-</strong></div>
         <div class="pill"><span>Rodada:</span> <strong id="hudRound">1</strong></div>
-        <div class="pill"><span>Palavras:</span> <strong id="hudWordCount">4</strong></div>
+        <div class="pill progress-pill">
+          <span>Palavras:</span>
+          <div id="roundDots" class="round-dots" aria-label="Progresso das palavras da rodada"></div>
+        </div>
       </div>
 
       <div id="wordCard" class="word-card">
-        <h2 id="promptTitle">Ouça e complete:</h2>
-        <button id="playAudioBtn" class="btn sound">Ouvir palavra</button>
+        <h2 id="promptTitle">
+          <button id="playAudioBtn" class="inline-sound" aria-label="Ouvir palavra">🔈 Ouça</button>
+          <span>e complete</span>
+        </h2>
 
         <div id="wordSlots" class="word-slots"></div>
 
@@ -69,8 +83,15 @@
         <p id="feedback" class="feedback"></p>
       </div>
 
-      <div class="game-actions">
-        <button id="backToMenuBtn" class="btn ghost">Voltar ao menu</button>
+      <div id="statsModal" class="stats-modal" hidden>
+        <div class="stats-panel" role="dialog" aria-modal="true" aria-labelledby="statsTitle">
+          <div class="stats-head">
+            <h3 id="statsTitle">Desempenho por Palavra</h3>
+            <button id="closeStatsBtn" class="btn ghost stats-close-btn" aria-label="Fechar estatísticas">Fechar</button>
+          </div>
+          <p class="stats-subtitle">Ordenado por % de acerto (todas as rodadas).</p>
+          <div id="statsList" class="stats-list"></div>
+        </div>
       </div>
     </section>
   </main>
