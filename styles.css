@@ -312,6 +312,10 @@ select:focus {
   margin: 14px 0;
 }
 
+.word-slots.single-row {
+  flex-wrap: nowrap;
+}
+
 .slot,
 .letter-input {
   width: var(--slot-size);

@@ -95,12 +95,25 @@ function updateSlotSize(wordLength = 0) {
 
   const slots = Math.max(1, wordLength || DOM.wordSlots.children.length || 1);
   const containerWidth = DOM.wordCard ? DOM.wordCard.clientWidth : window.innerWidth;
-  const maxSlotsInRow = isLikelyMobile() ? Math.min(slots, 8) : Math.min(slots, 10);
   const gap = Math.max(6, Math.min(10, Math.floor(containerWidth * 0.018)));
-  const horizontalPadding = isLikelyMobile() ? 20 : 28;
-  const usableWidth = Math.max(240, containerWidth - horizontalPadding);
-  const computed = Math.floor((usableWidth - (maxSlotsInRow - 1) * gap) / maxSlotsInRow);
-  const size = Math.max(34, Math.min(58, computed));
+  const horizontalPadding = isLikelyMobile() ? 22 : 30;
+  const safety = 12;
+  const usableWidth = Math.max(180, containerWidth - horizontalPadding - safety);
+
+  const minSingleLineSize = isLikelyMobile() ? 26 : 30;
+  const singleLineComputed = Math.floor((usableWidth - (slots - 1) * gap) / slots);
+  const canStaySingleLine = slots <= 12 && singleLineComputed >= minSingleLineSize;
+
+  let size;
+  if (canStaySingleLine) {
+    size = Math.max(minSingleLineSize, Math.min(58, singleLineComputed));
+    DOM.wordSlots.classList.add("single-row");
+  } else {
+    const maxSlotsInRow = isLikelyMobile() ? Math.min(slots, 8) : Math.min(slots, 10);
+    const wrappedComputed = Math.floor((usableWidth - (maxSlotsInRow - 1) * gap) / maxSlotsInRow);
+    size = Math.max(26, Math.min(58, wrappedComputed));
+    DOM.wordSlots.classList.remove("single-row");
+  }
 
   DOM.wordSlots.style.setProperty("--slot-size", `${size}px`);
   DOM.wordSlots.style.setProperty("--slot-gap", `${gap}px`);
