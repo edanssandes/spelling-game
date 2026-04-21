@@ -111,7 +111,9 @@ function normalizeWord(raw) {
     .toLowerCase()
     .trim()
     .replace(/\.mp3$/i, "")
-    .replace(/[^a-z]/g, "");
+    .replace(/[^a-z\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function shuffle(arr) {
@@ -148,12 +150,17 @@ function handleViewportResize() {
   updateSlotSize();
 }
 
-function updateSlotSize(wordLength = 0) {
+function updateSlotSize(wordText = "") {
   if (!DOM.wordSlots) {
     return;
   }
 
-  const slots = Math.max(1, wordLength || DOM.wordSlots.children.length || 1);
+  const sourceWord = (wordText || state.currentWord || "").toLowerCase();
+  const lettersOnly = sourceWord.replace(/\s/g, "");
+  const spacesCount = (sourceWord.match(/\s/g) || []).length;
+  const slots = Math.max(1, lettersOnly.length || DOM.wordSlots.querySelectorAll(".slot, .letter-input").length || 1);
+  const visualUnits = slots + spacesCount * 0.55;
+  const hasSpaces = spacesCount > 0;
   const containerWidth = DOM.wordCard ? DOM.wordCard.clientWidth : window.innerWidth;
   const gap = Math.max(6, Math.min(10, Math.floor(containerWidth * 0.018)));
   const horizontalPadding = isLikelyMobile() ? 22 : 30;
@@ -161,18 +168,21 @@ function updateSlotSize(wordLength = 0) {
   const usableWidth = Math.max(180, containerWidth - horizontalPadding - safety);
 
   const minSingleLineSize = isLikelyMobile() ? 26 : 30;
-  const singleLineComputed = Math.floor((usableWidth - (slots - 1) * gap) / slots);
+  const visualElements = Math.max(1, slots + spacesCount);
+  const singleLineComputed = Math.floor((usableWidth - (visualElements - 1) * gap) / visualUnits);
   const canStaySingleLine = slots <= 12 && singleLineComputed >= minSingleLineSize;
 
   let size;
   if (canStaySingleLine) {
     size = Math.max(minSingleLineSize, Math.min(58, singleLineComputed));
     DOM.wordSlots.classList.add("single-row");
+    DOM.wordSlots.classList.remove("break-at-space");
   } else {
     const maxSlotsInRow = isLikelyMobile() ? Math.min(slots, 8) : Math.min(slots, 10);
     const wrappedComputed = Math.floor((usableWidth - (maxSlotsInRow - 1) * gap) / maxSlotsInRow);
     size = Math.max(26, Math.min(58, wrappedComputed));
     DOM.wordSlots.classList.remove("single-row");
+    DOM.wordSlots.classList.toggle("break-at-space", hasSpaces && isLikelyMobile());
   }
 
   DOM.wordSlots.style.setProperty("--slot-size", `${size}px`);
@@ -267,18 +277,33 @@ function getRevealCount(word, difficulty) {
 }
 
 function buildMask(word, difficulty) {
-  const len = word.length;
-  const revealCount = getRevealCount(word, difficulty);
-  const indexes = Array.from({ length: len }, (_, i) => i);
-  const revealSet = new Set(shuffle(indexes).slice(0, revealCount));
-  return indexes.map((idx) => revealSet.has(idx));
+  const indexes = Array.from({ length: word.length }, (_, i) => i);
+  const letterIndexes = indexes.filter((idx) => /[a-z]/.test(word[idx]));
+  const revealCount = getRevealCount(letterIndexes.map(() => "a").join(""), difficulty);
+  const revealSet = new Set(shuffle(letterIndexes).slice(0, revealCount));
+
+  return indexes.map((idx) => {
+    if (!/[a-z]/.test(word[idx])) {
+      return true;
+    }
+    return revealSet.has(idx);
+  });
 }
 
 function renderWordInputs(word, mask) {
   DOM.wordSlots.innerHTML = "";
-  updateSlotSize(word.length);
+  updateSlotSize(word);
 
   for (let i = 0; i < word.length; i += 1) {
+    if (word[i] === " ") {
+      const spacer = document.createElement("div");
+      spacer.className = "space-slot";
+      spacer.dataset.index = String(i);
+      spacer.setAttribute("aria-hidden", "true");
+      DOM.wordSlots.appendChild(spacer);
+      continue;
+    }
+
     if (mask[i]) {
       const slot = document.createElement("div");
       slot.className = "slot";
@@ -341,7 +366,9 @@ function getTypedWord() {
   const chars = [];
   const children = [...DOM.wordSlots.children];
   for (const node of children) {
-    if (node.classList.contains("slot")) {
+    if (node.classList.contains("space-slot")) {
+      chars.push(" ");
+    } else if (node.classList.contains("slot")) {
       chars.push(node.textContent.toLowerCase());
     } else {
       chars.push((node.value || "").toLowerCase());
@@ -514,8 +541,9 @@ function setLocked(locked) {
 
 function markWrongLetters(targetWord) {
   const children = [...DOM.wordSlots.children];
-  children.forEach((node, idx) => {
-    const expected = targetWord[idx].toUpperCase();
+  children.forEach((node) => {
+    const idx = Number(node.dataset.index);
+    const expected = targetWord[idx]?.toUpperCase() || "";
     if (node.classList.contains("letter-input")) {
       const value = (node.value || "").toUpperCase();
       node.classList.toggle("wrong", value !== expected);
@@ -527,6 +555,14 @@ function markWrongLetters(targetWord) {
 function revealCorrectWord(word) {
   DOM.wordSlots.innerHTML = "";
   for (const ch of word) {
+    if (ch === " ") {
+      const spacer = document.createElement("div");
+      spacer.className = "space-slot";
+      spacer.setAttribute("aria-hidden", "true");
+      DOM.wordSlots.appendChild(spacer);
+      continue;
+    }
+
     const slot = document.createElement("div");
     slot.className = "slot all-correct";
     slot.textContent = ch.toUpperCase();

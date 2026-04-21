@@ -316,6 +316,16 @@ select:focus {
   flex-wrap: nowrap;
 }
 
+.word-slots.break-at-space {
+  justify-content: center;
+}
+
+.space-slot {
+  width: calc(var(--slot-size) * 0.48);
+  height: var(--slot-size);
+  flex: 0 0 auto;
+}
+
 .slot,
 .letter-input {
   width: var(--slot-size);
@@ -505,12 +515,23 @@ body.tight-space .topbar {
 }
 
 body.tight-space .topbar p,
-body.tight-space .hud .pill {
+body.tight-space .hud .pill:not(.progress-pill),
+body.tight-space .stats-btn {
   display: none;
 }
 
 body.tight-space .hud {
   margin-bottom: 8px;
+}
+
+body.tight-space .progress-pill {
+  display: inline-flex;
+  padding: 4px 8px;
+  gap: 6px;
+}
+
+body.tight-space .progress-pill > span {
+  display: none;
 }
 
 body.tight-space .topbar h1 {
@@ -658,6 +679,12 @@ body.tight-space .stats-btn {
   .round-dot {
     width: 10px;
     height: 10px;
+  }
+
+  .word-slots.break-at-space .space-slot {
+    width: 0;
+    height: 0;
+    flex-basis: 100%;
   }
 
   .stats-panel {
