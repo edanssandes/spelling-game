@@ -305,6 +305,8 @@ select:focus {
 .word-slots {
   --slot-size: clamp(38px, 10vw, 58px);
   --slot-gap: clamp(6px, 1.8vw, 10px);
+  --slot-radius: clamp(4px, calc(var(--slot-size) * 0.16), 10px);
+  --slot-border: clamp(1px, calc(var(--slot-size) * 0.05), 2px);
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
@@ -330,7 +332,7 @@ select:focus {
 .letter-input {
   width: var(--slot-size);
   height: var(--slot-size);
-  border-radius: 12px;
+  border-radius: var(--slot-radius);
   font-size: clamp(0.82rem, calc(var(--slot-size) * 0.38), 1.55rem);
   font-weight: 800;
   text-transform: uppercase;
@@ -345,11 +347,11 @@ select:focus {
 
 .slot {
   background: #f3f7ff;
-  border: 2px solid #d2dcf3;
+  border: var(--slot-border) solid #d2dcf3;
 }
 
 .letter-input {
-  border: 2px dashed #7ea8ff;
+  border: var(--slot-border) dashed #7ea8ff;
   margin: 0;
   padding: 0;
   min-width: 0;
