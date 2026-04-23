@@ -1175,7 +1175,9 @@ function attachEvents() {
 
   DOM.startGameBtn.addEventListener("click", startGame);
 
-  DOM.toggleMusicBtn.addEventListener("click", toggleMusic);
+  if (DOM.toggleMusicBtn) {
+    DOM.toggleMusicBtn.addEventListener("click", toggleMusic);
+  }
 
   DOM.playAudioBtn.addEventListener("click", async () => {
     if (!state.currentWord || state.isLocked || state.isAudioEasterEggPlaying || state.isAudioPenaltyActive) {
