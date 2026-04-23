@@ -45,7 +45,9 @@ const state = {
   speechVoice: null,
   utteranceRate: 0.88,
   audioClickTimes: [],
-  isAudioEasterEggPlaying: false
+  isAudioEasterEggPlaying: false,
+  audioEasterEggLevel: 0,
+  isAudioPenaltyActive: false
 };
 
 const SOUND_PATHS = {
@@ -67,6 +69,59 @@ const SOUND_VOLUMES = {
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const EASTER_EGG_WINDOW_MS = 5000;
 const EASTER_EGG_TRIGGER_CLICKS = 10;
+const EASTER_EGG_PENALTY_MS = 20000;
+const DEFAULT_AUDIO_BUTTON_TEXT = "🔈 Ouça";
+const SAD_AUDIO_BUTTON_TEXT = "☹️ Ouça";
+const EASTER_EGG_PHRASES = [
+  "Please, click more gently.",
+  "Please stop clicking so quickly.",
+  "You are clicking too much. Please slow down.",
+  "I am getting upset. Please stop spamming this button.",
+  "Enough. I am leaving. I cannot stay here with you."
+];
+
+function updateAudioButtonState() {
+  if (state.isAudioPenaltyActive) {
+    DOM.playAudioBtn.disabled = true;
+    DOM.playAudioBtn.textContent = SAD_AUDIO_BUTTON_TEXT;
+    DOM.playAudioBtn.setAttribute("aria-label", "Áudio temporariamente indisponível");
+    return;
+  }
+
+  DOM.playAudioBtn.disabled = state.isLocked || state.isAudioEasterEggPlaying;
+  DOM.playAudioBtn.textContent = DEFAULT_AUDIO_BUTTON_TEXT;
+  DOM.playAudioBtn.setAttribute("aria-label", "Ouvir palavra");
+}
+
+function isAudioMutedByPenalty() {
+  return state.isAudioPenaltyActive;
+}
+
+async function applyEasterEggOutcome(phraseIndex) {
+  if (phraseIndex >= EASTER_EGG_PHRASES.length - 1) {
+    state.isAudioPenaltyActive = true;
+    updateAudioButtonState();
+
+    if (state.bgmAudio) {
+      state.bgmAudio.pause();
+    }
+
+    await wait(EASTER_EGG_PENALTY_MS);
+
+    state.isAudioPenaltyActive = false;
+    state.audioEasterEggLevel = 0;
+
+    if (state.bgmAudio && DOM.gamePanel.classList.contains("active")) {
+      state.bgmAudio.play().then(() => {
+        state.bgmStarted = true;
+      }).catch(() => {
+        state.bgmStarted = false;
+      });
+    }
+  } else {
+    state.audioEasterEggLevel += 1;
+  }
+}
 
 function registerAudioRapidClick() {
   const now = Date.now();
@@ -77,20 +132,24 @@ function registerAudioRapidClick() {
 
 async function playStopClickingEasterEgg() {
   state.isAudioEasterEggPlaying = true;
-  DOM.playAudioBtn.disabled = true;
+  updateAudioButtonState();
   state.audioClickTimes = [];
+
+  const phraseIndex = Math.min(state.audioEasterEggLevel, EASTER_EGG_PHRASES.length - 1);
+  const phrase = EASTER_EGG_PHRASES[phraseIndex];
 
   if (!("speechSynthesis" in window)) {
     await wait(2200);
     state.isAudioEasterEggPlaying = false;
-    DOM.playAudioBtn.disabled = state.isLocked;
+    await applyEasterEggOutcome(phraseIndex);
+    updateAudioButtonState();
     return;
   }
 
   await new Promise((resolve) => {
     speechSynthesis.cancel();
 
-    const utterance = new SpeechSynthesisUtterance("Please stop clicking over and over.");
+    const utterance = new SpeechSynthesisUtterance(phrase);
     utterance.lang = "en-US";
     utterance.rate = 0.92;
     utterance.pitch = 1;
@@ -109,10 +168,15 @@ async function playStopClickingEasterEgg() {
   });
 
   state.isAudioEasterEggPlaying = false;
-  DOM.playAudioBtn.disabled = state.isLocked;
+  await applyEasterEggOutcome(phraseIndex);
+  updateAudioButtonState();
 }
 
 function playSfx(name) {
+  if (isAudioMutedByPenalty()) {
+    return;
+  }
+
   const src = SOUND_PATHS[name];
   if (!src) {
     return;
@@ -539,6 +603,10 @@ function showFeedback(text, kind = "") {
 }
 
 async function playWordAudio(word) {
+  if (isAudioMutedByPenalty()) {
+    return;
+  }
+
   await new Promise((resolve) => {
     const audio = new Audio(`audios/${word}.mp3`);
     audio.addEventListener("canplaythrough", () => {
@@ -559,7 +627,7 @@ function chooseEnglishVoice() {
 }
 
 function speakWord(word) {
-  if (!("speechSynthesis" in window)) {
+  if (!("speechSynthesis" in window) || isAudioMutedByPenalty()) {
     return;
   }
   speechSynthesis.cancel();
@@ -580,7 +648,7 @@ function setLocked(locked) {
   state.isLocked = locked;
   DOM.submitBtn.disabled = locked;
   DOM.clearBtn.disabled = locked;
-  DOM.playAudioBtn.disabled = locked || state.isAudioEasterEggPlaying;
+  updateAudioButtonState();
   DOM.wordSlots.querySelectorAll(".letter-input").forEach((el) => {
     el.disabled = locked;
   });
@@ -807,7 +875,7 @@ function attachEvents() {
   DOM.startGameBtn.addEventListener("click", startGame);
 
   DOM.playAudioBtn.addEventListener("click", async () => {
-    if (!state.currentWord || state.isLocked || state.isAudioEasterEggPlaying) {
+    if (!state.currentWord || state.isLocked || state.isAudioEasterEggPlaying || state.isAudioPenaltyActive) {
       return;
     }
 
@@ -936,6 +1004,7 @@ async function playFireworks(durationMs = 1800) {
 function init() {
   initThemes();
   attachEvents();
+  updateAudioButtonState();
   resizeCanvas();
   window.addEventListener("resize", resizeCanvas);
   if (window.visualViewport) {
