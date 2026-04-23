@@ -188,6 +188,97 @@ select:focus {
   margin-top: 8px;
 }
 
+.avatar-config {
+  margin-top: 14px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 2px solid #d8e5fb;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(236, 246, 255, 0.76));
+}
+
+.avatar-config-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.avatar-config-head h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.coins-badge {
+  border-radius: 999px;
+  border: 2px solid #f7c36f;
+  background: #fff2c8;
+  padding: 5px 10px;
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.setup-avatar-preview {
+  margin-top: 10px;
+  min-height: 170px;
+  border-radius: 12px;
+  border: 2px dashed #b7c9e9;
+  background:
+    radial-gradient(circle at 20% 22%, rgba(255, 255, 255, 0.85) 0 18px, transparent 20px),
+    radial-gradient(circle at 78% 30%, rgba(255, 255, 255, 0.6) 0 12px, transparent 14px),
+    linear-gradient(180deg, #c9efff 0%, #f7fbff 60%, #e8fbe6 100%);
+  display: grid;
+  place-items: center;
+}
+
+.shop-items {
+  display: grid;
+  margin-top: 10px;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+#openShopBtn {
+  margin-top: 10px;
+}
+
+.shop-item {
+  border: 2px solid #cfdef4;
+  border-radius: 12px;
+  background: #fff;
+  padding: 8px;
+}
+
+.shop-item.equipped {
+  border-color: #57b37b;
+  background: #f2fff4;
+}
+
+.shop-item h5 {
+  margin: 0 0 3px;
+  font-size: 0.86rem;
+}
+
+.shop-slot,
+.shop-price {
+  margin: 0;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.shop-price {
+  margin-top: 2px;
+  color: #2f5d96;
+}
+
+.shop-btn {
+  margin-top: 6px;
+  width: 100%;
+  border-radius: 10px;
+  padding: 7px 8px;
+  font-size: 0.78rem;
+}
+
 #startGameBtn {
   display: block;
   margin-top: 12px;
@@ -430,6 +521,321 @@ select:focus {
   color: var(--danger);
 }
 
+.mascot-side-pop {
+  position: fixed;
+  right: -220px;
+  top: 58%;
+  z-index: 12;
+  pointer-events: none;
+}
+
+.mascot-side-pop.active {
+  animation: mascotSideBurst 0.9s ease-out;
+}
+
+.mascot-dance-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  background: transparent;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.mascot-dance-overlay[hidden] {
+  display: none !important;
+}
+
+.mascot-dance-stage {
+  width: min(360px, 82vw);
+  min-height: 260px;
+  display: grid;
+  place-items: center;
+}
+
+.mascot-avatar {
+  --mascot-base: #f48b3d;
+  --mascot-accent: #ffd9b0;
+  --mascot-ear: #ca5f1c;
+  position: relative;
+  width: 170px;
+  height: 210px;
+  transform-style: preserve-3d;
+}
+
+.mascot-shadow {
+  position: absolute;
+  left: 50%;
+  bottom: 10px;
+  width: 112px;
+  height: 22px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: rgba(32, 50, 70, 0.22);
+  filter: blur(2px);
+}
+
+.mascot-body {
+  position: absolute;
+  left: 50%;
+  bottom: 24px;
+  width: 102px;
+  height: 108px;
+  transform: translateX(-50%);
+  border-radius: 38px;
+  border: 3px solid rgba(22, 40, 60, 0.18);
+  background: radial-gradient(circle at 50% 30%, #fff 0 16px, transparent 18px), var(--mascot-base);
+}
+
+.mascot-head {
+  position: absolute;
+  left: 50%;
+  top: 22px;
+  width: 116px;
+  height: 108px;
+  transform: translateX(-50%);
+  border-radius: 42% 42% 46% 46%;
+  border: 3px solid rgba(22, 40, 60, 0.18);
+  background: linear-gradient(180deg, var(--mascot-base) 0%, rgba(36, 50, 74, 0.34) 100%);
+}
+
+.mascot-ear {
+  position: absolute;
+  width: 30px;
+  height: 36px;
+  border-radius: 48% 48% 16% 16%;
+  top: -18px;
+  background: var(--mascot-ear);
+}
+
+.mascot-ear.ear-left {
+  left: 11px;
+  transform: rotate(-16deg);
+}
+
+.mascot-ear.ear-right {
+  right: 11px;
+  transform: rotate(16deg);
+}
+
+.mascot-eye {
+  position: absolute;
+  top: 42px;
+  width: 14px;
+  height: 18px;
+  border-radius: 50%;
+  background: #0b1b33;
+}
+
+.mascot-eye.eye-left {
+  left: 32px;
+}
+
+.mascot-eye.eye-right {
+  right: 32px;
+}
+
+.mascot-blush {
+  position: absolute;
+  top: 63px;
+  width: 18px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 139, 163, 0.58);
+}
+
+.mascot-blush.blush-left {
+  left: 19px;
+}
+
+.mascot-blush.blush-right {
+  right: 19px;
+}
+
+.mascot-mouth {
+  position: absolute;
+  left: 50%;
+  top: 66px;
+  width: 18px;
+  height: 9px;
+  border-bottom: 3px solid #0f253f;
+  border-radius: 0 0 50% 50%;
+  transform: translateX(-50%);
+}
+
+.mascot-visor,
+.mascot-antenna,
+.mascot-outfit-layer,
+.mascot-hat,
+.mascot-glasses {
+  position: absolute;
+  pointer-events: none;
+}
+
+.mascot-robot .mascot-visor {
+  left: 50%;
+  top: 56px;
+  width: 62px;
+  height: 24px;
+  transform: translateX(-50%);
+  border-radius: 14px;
+  background: linear-gradient(90deg, #42f2ff 0%, #2f7bff 100%);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.6);
+}
+
+.mascot-robot .mascot-eye,
+.mascot-robot .mascot-blush,
+.mascot-robot .mascot-mouth {
+  opacity: 0;
+}
+
+.mascot-robot .mascot-head {
+  border-radius: 20px;
+}
+
+.mascot-robot .mascot-ear {
+  border-radius: 12px;
+  height: 30px;
+}
+
+.mascot-robot .mascot-antenna {
+  left: 50%;
+  top: -22px;
+  width: 6px;
+  height: 18px;
+  transform: translateX(-50%);
+  background: #1b548f;
+  border-radius: 10px;
+}
+
+.mascot-robot .mascot-antenna::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -8px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  transform: translateX(-50%);
+  background: #63ffdd;
+}
+
+.mascot-panda .mascot-head {
+  background: #fff;
+}
+
+.mascot-panda .mascot-ear {
+  background: #18273b;
+}
+
+.mascot-panda .mascot-eye {
+  box-shadow: 0 0 0 8px rgba(24, 39, 59, 0.26);
+}
+
+.pose-profile .mascot-avatar,
+.mascot-avatar.pose-profile {
+  transform: perspective(640px) rotateY(-24deg);
+}
+
+.mascot-avatar.pose-profile .eye-right,
+.mascot-avatar.pose-profile .blush-right,
+.mascot-avatar.pose-profile .ear-right {
+  opacity: 0.15;
+}
+
+.mascot-avatar.pose-profile .mascot-mouth {
+  left: 44%;
+}
+
+.mascot-avatar.wear-hat-comet .mascot-hat {
+  left: 50%;
+  top: 2px;
+  width: 78px;
+  height: 26px;
+  transform: translateX(-50%);
+  border-radius: 30px 30px 14px 14px;
+  background: linear-gradient(180deg, #3a63d3 0%, #2448a8 100%);
+  box-shadow: 0 4px 0 #142f75;
+}
+
+.mascot-avatar.wear-hat-crown .mascot-hat {
+  left: 50%;
+  top: -4px;
+  width: 66px;
+  height: 32px;
+  transform: translateX(-50%);
+  clip-path: polygon(0 100%, 8% 32%, 24% 56%, 40% 18%, 57% 52%, 74% 14%, 90% 52%, 100% 100%);
+  background: linear-gradient(180deg, #ffe380 0%, #e6ad3d 100%);
+}
+
+.mascot-avatar.wear-glasses-star .mascot-glasses {
+  left: 50%;
+  top: 52px;
+  width: 74px;
+  height: 18px;
+  transform: translateX(-50%);
+  border-top: 3px solid #1b2a57;
+}
+
+.mascot-avatar.wear-glasses-star .mascot-glasses::before,
+.mascot-avatar.wear-glasses-star .mascot-glasses::after {
+  content: "";
+  position: absolute;
+  top: -6px;
+  width: 26px;
+  height: 22px;
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 92%, 50% 70%, 21% 92%, 32% 57%, 2% 35%, 39% 35%);
+  background: rgba(63, 110, 255, 0.45);
+  border: 2px solid #1d2f63;
+}
+
+.mascot-avatar.wear-glasses-star .mascot-glasses::before {
+  left: 0;
+}
+
+.mascot-avatar.wear-glasses-star .mascot-glasses::after {
+  right: 0;
+}
+
+.mascot-avatar.wear-glasses-neon .mascot-glasses {
+  left: 50%;
+  top: 55px;
+  width: 86px;
+  height: 22px;
+  transform: translateX(-50%);
+  border-radius: 14px;
+  border: 3px solid #00b8a4;
+  background: rgba(112, 255, 243, 0.28);
+  box-shadow: 0 0 12px rgba(0, 184, 164, 0.42);
+}
+
+.mascot-avatar.wear-outfit-cape .mascot-outfit-layer {
+  left: 50%;
+  bottom: 28px;
+  width: 128px;
+  height: 108px;
+  transform: translateX(-50%);
+  border-radius: 26px 26px 52px 52px;
+  background: linear-gradient(180deg, #ff5a78 0%, #b91344 100%);
+  z-index: -1;
+}
+
+.mascot-avatar.wear-outfit-jacket .mascot-outfit-layer {
+  left: 50%;
+  bottom: 27px;
+  width: 98px;
+  height: 72px;
+  transform: translateX(-50%);
+  border-radius: 26px;
+  border: 3px solid #204587;
+  background: linear-gradient(180deg, #62aeff 0%, #2e73de 100%);
+}
+
+.mascot-avatar.dancing {
+  animation: mascotDance 0.44s ease-in-out infinite;
+}
+
 .stats-modal {
   position: fixed;
   inset: 0;
@@ -444,6 +850,53 @@ select:focus {
 
 .stats-modal[hidden] {
   display: none !important;
+}
+
+.shop-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 32;
+  display: grid;
+  place-items: center;
+  padding: 14px;
+  background: rgba(20, 31, 54, 0.55);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.shop-modal[hidden] {
+  display: none !important;
+}
+
+.shop-panel {
+  width: min(760px, 100%);
+  margin: auto;
+  background: #fffdf8;
+  border: 2px solid #dbe7f8;
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  padding: 12px;
+}
+
+.shop-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.shop-head h3 {
+  margin: 0;
+}
+
+.shop-subtitle {
+  margin: 6px 0 8px;
+  opacity: 0.8;
+  font-size: 0.92rem;
+}
+
+.shop-coins-badge {
+  display: inline-flex;
 }
 
 .stats-panel {
@@ -624,6 +1077,21 @@ body.tight-space .stats-btn {
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes mascotSideBurst {
+  0% { transform: translateX(0) translateY(-50%) scale(0.7); opacity: 0; }
+  22% { transform: translateX(-250px) translateY(-50%) scale(1); opacity: 1; }
+  72% { transform: translateX(-230px) translateY(-50%) scale(1.04); opacity: 1; }
+  100% { transform: translateX(0) translateY(-50%) scale(0.86); opacity: 0; }
+}
+
+@keyframes mascotDance {
+  0% { transform: translateY(0) rotate(-5deg) scale(1); }
+  25% { transform: translateY(-8px) rotate(4deg) scale(1.03); }
+  50% { transform: translateY(0) rotate(7deg) scale(1); }
+  75% { transform: translateY(-7px) rotate(-4deg) scale(1.03); }
+  100% { transform: translateY(0) rotate(-5deg) scale(1); }
+}
+
 @keyframes currentDotPulse {
   0%,
   100% {
@@ -708,6 +1176,20 @@ body.tight-space .stats-btn {
   .round-dot {
     width: 10px;
     height: 10px;
+  }
+
+  .shop-items {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mascot-avatar {
+    width: 150px;
+    height: 188px;
+  }
+
+  .mascot-dance-stage {
+    width: min(300px, 88vw);
+    min-height: 220px;
   }
 
   .word-slots.break-at-space .space-slot {

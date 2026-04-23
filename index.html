@@ -43,9 +43,38 @@
         <select id="themeSelect"></select>
       </label>
 
+      <section class="avatar-config" aria-labelledby="avatarConfigTitle">
+        <div class="avatar-config-head">
+          <h3 id="avatarConfigTitle">Escolha seu Mascote</h3>
+          <div class="coins-badge"><span>Moedas:</span> <strong id="setupCoins">0</strong></div>
+        </div>
+
+        <label class="field">
+          <span>Mascote</span>
+          <select id="mascotSelect"></select>
+        </label>
+
+        <div id="setupAvatarPreview" class="setup-avatar-preview" aria-label="Prévia do mascote"></div>
+
+        <button id="openShopBtn" class="btn ghost">Abrir Loja de Itens</button>
+      </section>
+
       <button id="startGameBtn" class="btn primary">Iniciar Jogo</button>
       <p id="setupError" class="setup-error" hidden></p>
     </section>
+
+    <div id="shopModal" class="shop-modal" hidden>
+      <div class="shop-panel" role="dialog" aria-modal="true" aria-labelledby="shopTitle">
+        <div class="shop-head">
+          <h3 id="shopTitle">Loja de Itens do Mascote</h3>
+          <button id="closeShopBtn" class="btn ghost stats-close-btn" aria-label="Fechar loja">Fechar</button>
+        </div>
+        <p class="shop-subtitle">Compre e equipe chapéus, óculos e roupas.</p>
+        <div class="coins-badge shop-coins-badge"><span>Moedas:</span> <strong id="shopCoins">0</strong></div>
+        <div id="shopAvatarPreview" class="setup-avatar-preview" aria-label="Prévia do mascote na loja"></div>
+        <div id="shopItems" class="shop-items"></div>
+      </div>
+    </div>
 
     <section id="gamePanel" class="panel">
       <div class="hud">
@@ -54,6 +83,7 @@
         <div class="pill"><span>Jogador:</span> <strong id="hudPlayer">-</strong></div>
         <div class="pill"><span>Tema:</span> <strong id="hudTheme">-</strong></div>
         <div class="pill"><span>Rodada:</span> <strong id="hudRound">1</strong></div>
+        <div class="pill"><span>Moedas:</span> <strong id="hudCoins">0</strong></div>
         <div class="pill progress-pill">
           <span>Palavras:</span>
           <div id="roundDots" class="round-dots" aria-label="Progresso das palavras da rodada"></div>
@@ -74,6 +104,12 @@
         </div>
 
         <p id="feedback" class="feedback"></p>
+      </div>
+
+      <div id="mascotSidePop" class="mascot-side-pop" aria-hidden="true"></div>
+
+      <div id="mascotDanceOverlay" class="mascot-dance-overlay" hidden>
+        <div id="mascotDanceStage" class="mascot-dance-stage" role="status" aria-live="polite"></div>
       </div>
 
       <div id="statsModal" class="stats-modal" hidden>

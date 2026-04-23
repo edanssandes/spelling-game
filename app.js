@@ -8,7 +8,20 @@ const DOM = {
   hudPlayer: document.getElementById("hudPlayer"),
   hudTheme: document.getElementById("hudTheme"),
   hudRound: document.getElementById("hudRound"),
+  hudCoins: document.getElementById("hudCoins"),
   roundDots: document.getElementById("roundDots"),
+  mascotSelect: document.getElementById("mascotSelect"),
+  openShopBtn: document.getElementById("openShopBtn"),
+  shopModal: document.getElementById("shopModal"),
+  closeShopBtn: document.getElementById("closeShopBtn"),
+  setupCoins: document.getElementById("setupCoins"),
+  shopCoins: document.getElementById("shopCoins"),
+  setupAvatarPreview: document.getElementById("setupAvatarPreview"),
+  shopAvatarPreview: document.getElementById("shopAvatarPreview"),
+  shopItems: document.getElementById("shopItems"),
+  mascotSidePop: document.getElementById("mascotSidePop"),
+  mascotDanceOverlay: document.getElementById("mascotDanceOverlay"),
+  mascotDanceStage: document.getElementById("mascotDanceStage"),
   statsBtn: document.getElementById("statsBtn"),
   playAudioBtn: document.getElementById("playAudioBtn"),
   wordSlots: document.getElementById("wordSlots"),
@@ -47,7 +60,15 @@ const state = {
   audioClickTimes: [],
   isAudioEasterEggPlaying: false,
   audioEasterEggLevel: 0,
-  isAudioPenaltyActive: false
+  isAudioPenaltyActive: false,
+  mascotId: "fox",
+  coins: 150,
+  ownedItems: new Set(),
+  equippedItems: {
+    hat: null,
+    glasses: null,
+    outfit: null
+  }
 };
 
 const SOUND_PATHS = {
@@ -72,6 +93,34 @@ const EASTER_EGG_TRIGGER_CLICKS = 10;
 const EASTER_EGG_PENALTY_MS = 20000;
 const DEFAULT_AUDIO_BUTTON_TEXT = "🔈 Ouça";
 const SAD_AUDIO_BUTTON_TEXT = "☹️ Ouça";
+const MASCOT_CATALOG = {
+  fox: {
+    label: "Rubi Raposa",
+    base: "#f48b3d",
+    accent: "#ffd9b0",
+    ear: "#ca5f1c"
+  },
+  panda: {
+    label: "Lumi Panda",
+    base: "#ffffff",
+    accent: "#1f2f45",
+    ear: "#0f1726"
+  },
+  robot: {
+    label: "Zig Robo",
+    base: "#9be0ff",
+    accent: "#2f6db4",
+    ear: "#1f4f87"
+  }
+};
+const SHOP_ITEMS = [
+  { id: "hat-comet", name: "Bone Cometa", slot: "hat", price: 55, className: "wear-hat-comet" },
+  { id: "hat-crown", name: "Coroa Estelar", slot: "hat", price: 95, className: "wear-hat-crown" },
+  { id: "glasses-star", name: "Oculos Star", slot: "glasses", price: 60, className: "wear-glasses-star" },
+  { id: "glasses-neon", name: "Oculos Neon", slot: "glasses", price: 80, className: "wear-glasses-neon" },
+  { id: "outfit-cape", name: "Capa Heroi", slot: "outfit", price: 110, className: "wear-outfit-cape" },
+  { id: "outfit-jacket", name: "Jaqueta Pixel", slot: "outfit", price: 130, className: "wear-outfit-jacket" }
+];
 const EASTER_EGG_PHRASES = [
   "Please, click more gently.",
   "Please stop clicking so quickly.",
@@ -95,6 +144,197 @@ function updateAudioButtonState() {
 
 function isAudioMutedByPenalty() {
   return state.isAudioPenaltyActive;
+}
+
+function getEquippedClassNames() {
+  return Object.values(state.equippedItems)
+    .map((itemId) => SHOP_ITEMS.find((item) => item.id === itemId)?.className || "")
+    .filter(Boolean)
+    .join(" ");
+}
+
+function createMascotAvatar({ pose = "front", dancing = false } = {}) {
+  const cfg = MASCOT_CATALOG[state.mascotId] || MASCOT_CATALOG.fox;
+  const avatar = document.createElement("div");
+  avatar.className = `mascot-avatar mascot-${state.mascotId} pose-${pose} ${dancing ? "dancing" : ""} ${getEquippedClassNames()}`.trim();
+  avatar.style.setProperty("--mascot-base", cfg.base);
+  avatar.style.setProperty("--mascot-accent", cfg.accent);
+  avatar.style.setProperty("--mascot-ear", cfg.ear);
+
+  avatar.innerHTML = `
+    <div class="mascot-shadow"></div>
+    <div class="mascot-body"></div>
+    <div class="mascot-head">
+      <div class="mascot-ear ear-left"></div>
+      <div class="mascot-ear ear-right"></div>
+      <div class="mascot-eye eye-left"></div>
+      <div class="mascot-eye eye-right"></div>
+      <div class="mascot-blush blush-left"></div>
+      <div class="mascot-blush blush-right"></div>
+      <div class="mascot-mouth"></div>
+      <div class="mascot-visor"></div>
+      <div class="mascot-antenna"></div>
+    </div>
+    <div class="mascot-outfit-layer"></div>
+    <div class="mascot-hat"></div>
+    <div class="mascot-glasses"></div>
+  `;
+
+  return avatar;
+}
+
+function updateCoinDisplays() {
+  if (DOM.hudCoins) {
+    DOM.hudCoins.textContent = String(state.coins);
+  }
+  if (DOM.setupCoins) {
+    DOM.setupCoins.textContent = String(state.coins);
+  }
+  if (DOM.shopCoins) {
+    DOM.shopCoins.textContent = String(state.coins);
+  }
+}
+
+function renderAvatarPreview(targetEl) {
+  if (!targetEl) {
+    return;
+  }
+  targetEl.innerHTML = "";
+  targetEl.appendChild(createMascotAvatar({ pose: "front" }));
+}
+
+function renderSetupAvatarPreview() {
+  renderAvatarPreview(DOM.setupAvatarPreview);
+}
+
+function renderShopAvatarPreview() {
+  renderAvatarPreview(DOM.shopAvatarPreview);
+}
+
+function buyOrEquipItem(itemId) {
+  const item = SHOP_ITEMS.find((candidate) => candidate.id === itemId);
+  if (!item) {
+    return;
+  }
+
+  if (!state.ownedItems.has(itemId)) {
+    if (state.coins < item.price) {
+      showFeedback("Moedas insuficientes para esse item.", "error");
+      return;
+    }
+    state.coins -= item.price;
+    state.ownedItems.add(itemId);
+  }
+
+  state.equippedItems[item.slot] = state.equippedItems[item.slot] === itemId ? null : itemId;
+  renderShopItems();
+  renderSetupAvatarPreview();
+  renderShopAvatarPreview();
+  updateCoinDisplays();
+}
+
+function renderShopItems() {
+  if (!DOM.shopItems) {
+    return;
+  }
+
+  DOM.shopItems.innerHTML = "";
+  SHOP_ITEMS.forEach((item) => {
+    const owned = state.ownedItems.has(item.id);
+    const equipped = state.equippedItems[item.slot] === item.id;
+
+    const card = document.createElement("article");
+    card.className = `shop-item ${equipped ? "equipped" : ""}`.trim();
+
+    const title = document.createElement("h5");
+    title.textContent = item.name;
+
+    const slot = document.createElement("p");
+    slot.className = "shop-slot";
+    slot.textContent = `Tipo: ${item.slot}`;
+
+    const price = document.createElement("p");
+    price.className = "shop-price";
+    price.textContent = owned ? "Comprado" : `${item.price} moedas`;
+
+    const btn = document.createElement("button");
+    btn.className = "btn ghost shop-btn";
+    btn.disabled = !owned && state.coins < item.price;
+    if (equipped) {
+      btn.textContent = "Remover";
+    } else if (owned) {
+      btn.textContent = "Equipar";
+    } else {
+      btn.textContent = "Comprar";
+    }
+    btn.addEventListener("click", () => buyOrEquipItem(item.id));
+
+    card.appendChild(title);
+    card.appendChild(slot);
+    card.appendChild(price);
+    card.appendChild(btn);
+    DOM.shopItems.appendChild(card);
+  });
+}
+
+function initMascotSetup() {
+  if (!DOM.mascotSelect) {
+    return;
+  }
+
+  DOM.mascotSelect.innerHTML = "";
+  Object.entries(MASCOT_CATALOG).forEach(([id, mascot]) => {
+    const opt = document.createElement("option");
+    opt.value = id;
+    opt.textContent = mascot.label;
+    DOM.mascotSelect.appendChild(opt);
+  });
+  DOM.mascotSelect.value = state.mascotId;
+  renderSetupAvatarPreview();
+  renderShopAvatarPreview();
+  updateCoinDisplays();
+}
+
+function openShopModal() {
+  if (!DOM.shopModal) {
+    return;
+  }
+  renderShopAvatarPreview();
+  renderShopItems();
+  updateCoinDisplays();
+  DOM.shopModal.hidden = false;
+}
+
+function closeShopModal() {
+  if (!DOM.shopModal) {
+    return;
+  }
+  DOM.shopModal.hidden = true;
+}
+
+function showMascotSidePop() {
+  if (!DOM.mascotSidePop) {
+    return;
+  }
+  DOM.mascotSidePop.innerHTML = "";
+  DOM.mascotSidePop.appendChild(createMascotAvatar({ pose: "profile" }));
+  DOM.mascotSidePop.classList.remove("active");
+  // Restart animation cleanly.
+  void DOM.mascotSidePop.offsetWidth;
+  DOM.mascotSidePop.classList.add("active");
+}
+
+async function showMascotDanceCelebration(durationMs = 1900) {
+  if (!DOM.mascotDanceOverlay || !DOM.mascotDanceStage) {
+    return;
+  }
+
+  DOM.mascotDanceStage.innerHTML = "";
+  DOM.mascotDanceStage.appendChild(createMascotAvatar({ pose: "front", dancing: true }));
+  DOM.mascotDanceOverlay.hidden = false;
+  await wait(durationMs);
+  DOM.mascotDanceOverlay.hidden = true;
+  DOM.mascotDanceStage.innerHTML = "";
 }
 
 async function applyEasterEggOutcome(phraseIndex) {
@@ -720,6 +960,7 @@ function updateHud() {
   DOM.hudPlayer.textContent = state.playerName;
   DOM.hudTheme.textContent = state.selectedTheme;
   DOM.hudRound.textContent = String(state.roundNumber);
+  updateCoinDisplays();
   renderRoundDots();
 }
 
@@ -766,9 +1007,14 @@ async function loadNextWord() {
 }
 
 async function celebrateRoundClear() {
+  const celebrationDurationMs = 1900;
+  state.coins += 40;
+  updateCoinDisplays();
   playSfx("applause");
   showFeedback("Excelente! Rodada completa!", "ok");
+  const mascotDancePromise = showMascotDanceCelebration(celebrationDurationMs);
   await playFireworks(1900);
+  await mascotDancePromise;
   showFeedback("Pronto para a próxima rodada!", "ok");
   await wait(350);
 }
@@ -791,9 +1037,12 @@ async function handleSubmit() {
   }
 
   if (typed.toLowerCase() === target.toLowerCase()) {
+    state.coins += 12;
+    updateCoinDisplays();
     playSfx("success");
     recordWordAttempt(target, typed, true);
     showFeedback("Boa! Você acertou!", "ok");
+    showMascotSidePop();
     if (state.currentQueueIndex >= 0) {
       state.roundWordStatuses[state.currentQueueIndex] = "done";
       renderRoundDots();
@@ -857,12 +1106,14 @@ function startGame() {
 
   state.playerName = name;
   state.selectedTheme = theme;
+  state.mascotId = DOM.mascotSelect.value;
   state.difficulty = DOM.difficulty.value;
   state.roundNumber = 1;
   state.wordsPerRound = 4;
 
   playSfx("start");
   startBackgroundMusic();
+  closeShopModal();
   setPanel(true);
   startRound();
 }
@@ -870,6 +1121,24 @@ function startGame() {
 function attachEvents() {
   DOM.themeSelect.addEventListener("change", (e) => {
     state.selectedTheme = e.target.value;
+  });
+
+  DOM.mascotSelect.addEventListener("change", (e) => {
+    state.mascotId = e.target.value;
+    renderSetupAvatarPreview();
+    renderShopAvatarPreview();
+  });
+
+  DOM.openShopBtn.addEventListener("click", () => {
+    openShopModal();
+  });
+
+  DOM.closeShopBtn.addEventListener("click", closeShopModal);
+
+  DOM.shopModal.addEventListener("click", (e) => {
+    if (e.target === DOM.shopModal) {
+      closeShopModal();
+    }
   });
 
   DOM.startGameBtn.addEventListener("click", startGame);
@@ -901,6 +1170,10 @@ function attachEvents() {
   DOM.backToMenuBtn.addEventListener("click", () => {
     setLocked(false);
     setPanel(false);
+    closeShopModal();
+    renderSetupAvatarPreview();
+    renderShopAvatarPreview();
+    updateCoinDisplays();
     showFeedback("");
     stopBackgroundMusic();
   });
@@ -912,6 +1185,11 @@ function attachEvents() {
   });
 
   document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && DOM.shopModal && !DOM.shopModal.hidden) {
+      closeShopModal();
+      return;
+    }
+
     if (e.key === "Escape" && !DOM.statsModal.hidden) {
       closeStatsModal();
     }
@@ -1003,8 +1281,13 @@ async function playFireworks(durationMs = 1800) {
 
 function init() {
   initThemes();
+  initMascotSetup();
   attachEvents();
   updateAudioButtonState();
+  if (DOM.mascotDanceOverlay) {
+    DOM.mascotDanceOverlay.hidden = true;
+  }
+  closeShopModal();
   resizeCanvas();
   window.addEventListener("resize", resizeCanvas);
   if (window.visualViewport) {
