@@ -10,7 +10,11 @@ const DOM = {
   hudRound: document.getElementById("hudRound"),
   hudCoins: document.getElementById("hudCoins"),
   roundDots: document.getElementById("roundDots"),
-  mascotSelect: document.getElementById("mascotSelect"),
+  mascotPrevBtn: document.getElementById("mascotPrevBtn"),
+  mascotNextBtn: document.getElementById("mascotNextBtn"),
+  mascotCarouselViewport: document.getElementById("mascotCarouselViewport"),
+  mascotCarouselTrack: document.getElementById("mascotCarouselTrack"),
+  mascotCarouselLabel: document.getElementById("mascotCarouselLabel"),
   openShopBtn: document.getElementById("openShopBtn"),
   shopModal: document.getElementById("shopModal"),
   closeShopBtn: document.getElementById("closeShopBtn"),
@@ -130,6 +134,13 @@ const EASTER_EGG_PHRASES = [
   "I am getting upset. Please stop spamming this button.",
   "Enough. I am leaving. I cannot stay here with you."
 ];
+const MASCOT_IDS = Object.keys(MASCOT_CATALOG);
+const mascotCarouselDrag = {
+  pointerId: null,
+  startX: 0,
+  deltaX: 0,
+  isDragging: false
+};
 
 function updateAudioButtonState() {
   if (state.isAudioPenaltyActive) {
@@ -167,10 +178,10 @@ function getEquippedClassNames() {
     .join(" ");
 }
 
-function createMascotAvatar({ pose = "front", dancing = false } = {}) {
-  const cfg = MASCOT_CATALOG[state.mascotId] || MASCOT_CATALOG.fox;
+function createMascotAvatar({ mascotId = state.mascotId, pose = "front", dancing = false } = {}) {
+  const cfg = MASCOT_CATALOG[mascotId] || MASCOT_CATALOG.fox;
   const avatar = document.createElement("div");
-  avatar.className = `mascot-avatar mascot-${state.mascotId} pose-${pose} ${dancing ? "dancing" : ""} ${getEquippedClassNames()}`.trim();
+  avatar.className = `mascot-avatar mascot-${mascotId} pose-${pose} ${dancing ? "dancing" : ""} ${getEquippedClassNames()}`.trim();
   avatar.style.setProperty("--mascot-base", cfg.base);
   avatar.style.setProperty("--mascot-accent", cfg.accent);
   avatar.style.setProperty("--mascot-ear", cfg.ear);
@@ -225,6 +236,141 @@ function renderShopAvatarPreview() {
   renderAvatarPreview(DOM.shopAvatarPreview);
 }
 
+function updateMascotCarouselPosition({ animate = true } = {}) {
+  if (!DOM.mascotCarouselTrack) {
+    return;
+  }
+
+  DOM.mascotCarouselTrack.style.transition = animate ? "transform 260ms cubic-bezier(0.22, 1, 0.36, 1)" : "none";
+  DOM.mascotCarouselTrack.style.transform = `translateX(-${MASCOT_IDS.indexOf(state.mascotId) * 100}%)`;
+}
+
+function updateMascotCarouselActiveCard(direction = 0) {
+  if (!DOM.mascotCarouselTrack) {
+    return;
+  }
+
+  const cards = [...DOM.mascotCarouselTrack.children];
+  cards.forEach((card) => {
+    const isActive = card.dataset.mascotId === state.mascotId;
+    card.classList.toggle("is-active", isActive);
+    card.classList.remove("is-entering");
+    if (isActive) {
+      card.style.setProperty("--carousel-entry-shift", `${direction >= 0 ? 28 : -28}px`);
+      card.classList.add("is-entering");
+      window.setTimeout(() => {
+        card.classList.remove("is-entering");
+      }, 320);
+    }
+  });
+}
+
+function updateMascotCarouselLabel() {
+  if (!DOM.mascotCarouselLabel) {
+    return;
+  }
+
+  DOM.mascotCarouselLabel.textContent = (MASCOT_CATALOG[state.mascotId] || MASCOT_CATALOG.fox).label;
+}
+
+function renderMascotCarousel() {
+  if (!DOM.mascotCarouselTrack) {
+    return;
+  }
+
+  DOM.mascotCarouselTrack.innerHTML = "";
+  MASCOT_IDS.forEach((mascotId) => {
+    const card = document.createElement("button");
+    card.type = "button";
+    card.className = "mascot-carousel-card";
+    card.dataset.mascotId = mascotId;
+    card.setAttribute("aria-label", `Selecionar ${MASCOT_CATALOG[mascotId].label}`);
+    card.appendChild(createMascotAvatar({ mascotId }));
+    card.addEventListener("click", () => {
+      if (mascotId === state.mascotId) {
+        return;
+      }
+      const currentIndex = MASCOT_IDS.indexOf(state.mascotId);
+      const nextIndex = MASCOT_IDS.indexOf(mascotId);
+      selectMascotByIndex(nextIndex, { direction: nextIndex > currentIndex ? 1 : -1 });
+    });
+    DOM.mascotCarouselTrack.appendChild(card);
+  });
+
+  updateMascotCarouselPosition({ animate: false });
+  updateMascotCarouselActiveCard();
+  updateMascotCarouselLabel();
+}
+
+function syncMascotSelection(direction = 0) {
+  updateMascotCarouselPosition();
+  updateMascotCarouselActiveCard(direction);
+  updateMascotCarouselLabel();
+  renderSetupAvatarPreview();
+  renderShopAvatarPreview();
+}
+
+function selectMascotByIndex(nextIndex, { direction = 1 } = {}) {
+  const total = MASCOT_IDS.length;
+  if (!total) {
+    return;
+  }
+
+  const normalizedIndex = (nextIndex + total) % total;
+  state.mascotId = MASCOT_IDS[normalizedIndex];
+  syncMascotSelection(direction);
+}
+
+function nudgeMascotCarousel(step) {
+  const currentIndex = MASCOT_IDS.indexOf(state.mascotId);
+  selectMascotByIndex(currentIndex + step, { direction: step >= 0 ? 1 : -1 });
+}
+
+function beginMascotCarouselDrag(pointerId, clientX) {
+  if (!DOM.mascotCarouselViewport || !DOM.mascotCarouselTrack) {
+    return;
+  }
+
+  mascotCarouselDrag.pointerId = pointerId;
+  mascotCarouselDrag.startX = clientX;
+  mascotCarouselDrag.deltaX = 0;
+  mascotCarouselDrag.isDragging = true;
+  DOM.mascotCarouselViewport.classList.add("is-dragging");
+  DOM.mascotCarouselTrack.style.transition = "none";
+}
+
+function moveMascotCarouselDrag(clientX) {
+  if (!mascotCarouselDrag.isDragging || !DOM.mascotCarouselViewport || !DOM.mascotCarouselTrack) {
+    return;
+  }
+
+  mascotCarouselDrag.deltaX = clientX - mascotCarouselDrag.startX;
+  const viewportWidth = DOM.mascotCarouselViewport.clientWidth || 1;
+  const baseOffset = -MASCOT_IDS.indexOf(state.mascotId) * viewportWidth;
+  DOM.mascotCarouselTrack.style.transform = `translateX(${baseOffset + mascotCarouselDrag.deltaX}px)`;
+}
+
+function endMascotCarouselDrag() {
+  if (!mascotCarouselDrag.isDragging || !DOM.mascotCarouselViewport) {
+    return;
+  }
+
+  const threshold = Math.min(60, DOM.mascotCarouselViewport.clientWidth * 0.18);
+  const delta = mascotCarouselDrag.deltaX;
+  mascotCarouselDrag.pointerId = null;
+  mascotCarouselDrag.startX = 0;
+  mascotCarouselDrag.deltaX = 0;
+  mascotCarouselDrag.isDragging = false;
+  DOM.mascotCarouselViewport.classList.remove("is-dragging");
+
+  if (Math.abs(delta) >= threshold) {
+    nudgeMascotCarousel(delta < 0 ? 1 : -1);
+    return;
+  }
+
+  updateMascotCarouselPosition();
+}
+
 function buyOrEquipItem(itemId) {
   const item = SHOP_ITEMS.find((candidate) => candidate.id === itemId);
   if (!item) {
@@ -242,6 +388,7 @@ function buyOrEquipItem(itemId) {
 
   state.equippedItems[item.slot] = state.equippedItems[item.slot] === itemId ? null : itemId;
   renderShopItems();
+  renderMascotCarousel();
   renderSetupAvatarPreview();
   renderShopAvatarPreview();
   updateCoinDisplays();
@@ -292,18 +439,15 @@ function renderShopItems() {
 }
 
 function initMascotSetup() {
-  if (!DOM.mascotSelect) {
+  if (!DOM.mascotCarouselTrack) {
     return;
   }
 
-  DOM.mascotSelect.innerHTML = "";
-  Object.entries(MASCOT_CATALOG).forEach(([id, mascot]) => {
-    const opt = document.createElement("option");
-    opt.value = id;
-    opt.textContent = mascot.label;
-    DOM.mascotSelect.appendChild(opt);
-  });
-  DOM.mascotSelect.value = state.mascotId;
+  if (!MASCOT_CATALOG[state.mascotId]) {
+    state.mascotId = MASCOT_IDS[0];
+  }
+
+  renderMascotCarousel();
   renderSetupAvatarPreview();
   renderShopAvatarPreview();
   updateCoinDisplays();
@@ -1138,7 +1282,6 @@ function startGame() {
 
   state.playerName = name;
   state.selectedTheme = theme;
-  state.mascotId = DOM.mascotSelect.value;
   state.difficulty = DOM.difficulty.value;
   state.roundNumber = 1;
   state.wordsPerRound = 4;
@@ -1155,11 +1298,55 @@ function attachEvents() {
     state.selectedTheme = e.target.value;
   });
 
-  DOM.mascotSelect.addEventListener("change", (e) => {
-    state.mascotId = e.target.value;
-    renderSetupAvatarPreview();
-    renderShopAvatarPreview();
-  });
+  if (DOM.mascotPrevBtn) {
+    DOM.mascotPrevBtn.addEventListener("click", () => nudgeMascotCarousel(-1));
+  }
+
+  if (DOM.mascotNextBtn) {
+    DOM.mascotNextBtn.addEventListener("click", () => nudgeMascotCarousel(1));
+  }
+
+  if (DOM.mascotCarouselViewport) {
+    DOM.mascotCarouselViewport.addEventListener("pointerdown", (event) => {
+      if (event.pointerType === "mouse" && event.button !== 0) {
+        return;
+      }
+      beginMascotCarouselDrag(event.pointerId, event.clientX);
+      DOM.mascotCarouselViewport.setPointerCapture(event.pointerId);
+    });
+
+    DOM.mascotCarouselViewport.addEventListener("pointermove", (event) => {
+      if (event.pointerId !== mascotCarouselDrag.pointerId) {
+        return;
+      }
+      moveMascotCarouselDrag(event.clientX);
+    });
+
+    DOM.mascotCarouselViewport.addEventListener("pointerup", (event) => {
+      if (event.pointerId !== mascotCarouselDrag.pointerId) {
+        return;
+      }
+      endMascotCarouselDrag();
+    });
+
+    DOM.mascotCarouselViewport.addEventListener("pointercancel", (event) => {
+      if (event.pointerId !== mascotCarouselDrag.pointerId) {
+        return;
+      }
+      endMascotCarouselDrag();
+    });
+
+    DOM.mascotCarouselViewport.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        nudgeMascotCarousel(-1);
+      }
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        nudgeMascotCarousel(1);
+      }
+    });
+  }
 
   DOM.openShopBtn.addEventListener("click", () => {
     openShopModal();

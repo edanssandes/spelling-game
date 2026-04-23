@@ -49,10 +49,15 @@
           <div class="coins-badge"><span>Moedas:</span> <strong id="setupCoins">0</strong></div>
         </div>
 
-        <label class="field">
-          <span>Mascote</span>
-          <select id="mascotSelect"></select>
-        </label>
+        <div class="mascot-carousel" aria-label="Escolha do mascote">
+          <button id="mascotPrevBtn" class="mascot-nav-btn" type="button" aria-label="Mascote anterior">&lt;</button>
+          <div id="mascotCarouselViewport" class="mascot-carousel-viewport" tabindex="0" aria-live="polite">
+            <div id="mascotCarouselTrack" class="mascot-carousel-track"></div>
+          </div>
+          <button id="mascotNextBtn" class="mascot-nav-btn" type="button" aria-label="Próximo mascote">&gt;</button>
+        </div>
+
+        <p id="mascotCarouselLabel" class="mascot-carousel-label"></p>
 
         <div id="setupAvatarPreview" class="setup-avatar-preview" aria-label="Prévia do mascote"></div>
 
