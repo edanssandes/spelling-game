@@ -43,7 +43,9 @@ const state = {
   mask: [],
   isLocked: false,
   speechVoice: null,
-  utteranceRate: 0.88
+  utteranceRate: 0.88,
+  audioClickTimes: [],
+  isAudioEasterEggPlaying: false
 };
 
 const SOUND_PATHS = {
@@ -63,6 +65,52 @@ const SOUND_VOLUMES = {
 };
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const EASTER_EGG_WINDOW_MS = 5000;
+const EASTER_EGG_TRIGGER_CLICKS = 10;
+
+function registerAudioRapidClick() {
+  const now = Date.now();
+  state.audioClickTimes.push(now);
+  state.audioClickTimes = state.audioClickTimes.filter((time) => now - time <= EASTER_EGG_WINDOW_MS);
+  return state.audioClickTimes.length >= EASTER_EGG_TRIGGER_CLICKS;
+}
+
+async function playStopClickingEasterEgg() {
+  state.isAudioEasterEggPlaying = true;
+  DOM.playAudioBtn.disabled = true;
+  state.audioClickTimes = [];
+
+  if (!("speechSynthesis" in window)) {
+    await wait(2200);
+    state.isAudioEasterEggPlaying = false;
+    DOM.playAudioBtn.disabled = state.isLocked;
+    return;
+  }
+
+  await new Promise((resolve) => {
+    speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance("Please stop clicking over and over.");
+    utterance.lang = "en-US";
+    utterance.rate = 0.92;
+    utterance.pitch = 1;
+
+    if (!state.speechVoice) {
+      state.speechVoice = chooseEnglishVoice();
+    }
+
+    if (state.speechVoice) {
+      utterance.voice = state.speechVoice;
+    }
+
+    utterance.onend = () => resolve();
+    utterance.onerror = () => resolve();
+    speechSynthesis.speak(utterance);
+  });
+
+  state.isAudioEasterEggPlaying = false;
+  DOM.playAudioBtn.disabled = state.isLocked;
+}
 
 function playSfx(name) {
   const src = SOUND_PATHS[name];
@@ -532,7 +580,7 @@ function setLocked(locked) {
   state.isLocked = locked;
   DOM.submitBtn.disabled = locked;
   DOM.clearBtn.disabled = locked;
-  DOM.playAudioBtn.disabled = locked;
+  DOM.playAudioBtn.disabled = locked || state.isAudioEasterEggPlaying;
   DOM.wordSlots.querySelectorAll(".letter-input").forEach((el) => {
     el.disabled = locked;
   });
@@ -580,13 +628,18 @@ function renderRoundDots() {
   state.roundWordStatuses.forEach((status, idx) => {
     const dot = document.createElement("span");
     dot.className = "round-dot";
+    if (idx === state.currentQueueIndex) {
+      dot.classList.add("current");
+    }
     if (status === "done") {
       dot.classList.add("done");
     } else if (status === "failed") {
       dot.classList.add("failed");
     }
     dot.setAttribute("role", "img");
-    dot.setAttribute("aria-label", `Palavra ${idx + 1}: ${status}`);
+    const statusText = status === "pending" ? "pendente" : status;
+    const currentText = idx === state.currentQueueIndex ? " (atual)" : "";
+    dot.setAttribute("aria-label", `Palavra ${idx + 1}: ${statusText}${currentText}`);
     DOM.roundDots.appendChild(dot);
   });
 }
@@ -636,6 +689,7 @@ async function loadNextWord() {
 
   state.currentQueueIndex = state.queueIndexMap.shift();
   state.currentWord = state.queue.shift();
+  renderRoundDots();
   ensureWordStats(state.currentWord);
   state.mask = buildMask(state.currentWord, state.difficulty);
   renderWordInputs(state.currentWord, state.mask);
@@ -752,10 +806,16 @@ function attachEvents() {
 
   DOM.startGameBtn.addEventListener("click", startGame);
 
-  DOM.playAudioBtn.addEventListener("click", () => {
-    if (!state.currentWord || state.isLocked) {
+  DOM.playAudioBtn.addEventListener("click", async () => {
+    if (!state.currentWord || state.isLocked || state.isAudioEasterEggPlaying) {
       return;
     }
+
+    if (registerAudioRapidClick()) {
+      await playStopClickingEasterEgg();
+      return;
+    }
+
     playWordAudio(state.currentWord);
   });
 

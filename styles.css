@@ -241,6 +241,19 @@ select:focus {
   background: #d5d9e4;
 }
 
+.round-dot.current {
+  border-color: #63748f;
+  animation: currentDotPulse 0.95s ease-in-out infinite;
+}
+
+.round-dot.done.current {
+  border-color: #3f8d53;
+}
+
+.round-dot.failed.current {
+  border-color: #b24444;
+}
+
 .round-dot.done {
   border-color: #72bc80;
   background: #46b35e;
@@ -609,6 +622,20 @@ body.tight-space .stats-btn {
 @keyframes slideIn {
   from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes currentDotPulse {
+  0%,
+  100% {
+    border-width: 2px;
+    box-shadow: 0 0 0 0 rgba(86, 104, 133, 0.24);
+    transform: scale(1);
+  }
+  50% {
+    border-width: 4px;
+    box-shadow: 0 0 0 2px rgba(86, 104, 133, 0.16);
+    transform: scale(1.08);
+  }
 }
 
 @media (max-width: 760px) {
