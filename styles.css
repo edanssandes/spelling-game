@@ -296,6 +296,12 @@ select:focus {
   opacity: 0.9;
 }
 
+.music-btn {
+  padding: 8px 12px;
+  font-size: 0.82rem;
+  opacity: 0.95;
+}
+
 .hud {
   display: flex;
   flex-wrap: wrap;
@@ -988,6 +994,11 @@ body.tight-space .stats-btn {
   display: none;
 }
 
+body.tight-space .music-btn {
+  padding: 6px 10px;
+  font-size: 0.76rem;
+}
+
 body.tight-space .hud {
   margin-bottom: 8px;
 }
@@ -1143,6 +1154,11 @@ body.tight-space .stats-btn {
   }
 
   .stats-btn {
+    font-size: 0.74rem;
+    padding: 6px 9px;
+  }
+
+  .music-btn {
     font-size: 0.74rem;
     padding: 6px 9px;
   }

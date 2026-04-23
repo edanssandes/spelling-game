@@ -23,6 +23,7 @@ const DOM = {
   mascotDanceOverlay: document.getElementById("mascotDanceOverlay"),
   mascotDanceStage: document.getElementById("mascotDanceStage"),
   statsBtn: document.getElementById("statsBtn"),
+  toggleMusicBtn: document.getElementById("toggleMusicBtn"),
   playAudioBtn: document.getElementById("playAudioBtn"),
   wordSlots: document.getElementById("wordSlots"),
   submitBtn: document.getElementById("submitBtn"),
@@ -61,6 +62,7 @@ const state = {
   isAudioEasterEggPlaying: false,
   audioEasterEggLevel: 0,
   isAudioPenaltyActive: false,
+  isMusicEnabled: true,
   mascotId: "fox",
   coins: 150,
   ownedItems: new Set(),
@@ -76,7 +78,7 @@ const SOUND_PATHS = {
   success: "sounds/success.mp3",
   error: "sounds/error.mp3",
   applause: "sounds/applause.mp3",
-  bgm: "sounds/bgm.mp3"
+  bgm: "sounds/bgm_calm.mp3"
 };
 
 const SOUND_VOLUMES = {
@@ -140,6 +142,18 @@ function updateAudioButtonState() {
   DOM.playAudioBtn.disabled = state.isLocked || state.isAudioEasterEggPlaying;
   DOM.playAudioBtn.textContent = DEFAULT_AUDIO_BUTTON_TEXT;
   DOM.playAudioBtn.setAttribute("aria-label", "Ouvir palavra");
+}
+
+function updateMusicButtonState() {
+  if (!DOM.toggleMusicBtn) {
+    return;
+  }
+
+  DOM.toggleMusicBtn.textContent = state.isMusicEnabled ? "♪ Música: On" : "♪ Música: Off";
+  DOM.toggleMusicBtn.setAttribute(
+    "aria-label",
+    state.isMusicEnabled ? "Desabilitar música" : "Habilitar música"
+  );
 }
 
 function isAudioMutedByPenalty() {
@@ -351,7 +365,7 @@ async function applyEasterEggOutcome(phraseIndex) {
     state.isAudioPenaltyActive = false;
     state.audioEasterEggLevel = 0;
 
-    if (state.bgmAudio && DOM.gamePanel.classList.contains("active")) {
+    if (state.bgmAudio && state.isMusicEnabled && DOM.gamePanel.classList.contains("active")) {
       state.bgmAudio.play().then(() => {
         state.bgmStarted = true;
       }).catch(() => {
@@ -428,6 +442,10 @@ function playSfx(name) {
 }
 
 function startBackgroundMusic() {
+  if (!state.isMusicEnabled) {
+    return;
+  }
+
   if (!state.bgmAudio) {
     const audio = new Audio(SOUND_PATHS.bgm);
     audio.loop = true;
@@ -456,6 +474,20 @@ function stopBackgroundMusic() {
   state.bgmAudio.pause();
   state.bgmAudio.currentTime = 0;
   state.bgmStarted = false;
+}
+
+function toggleMusic() {
+  state.isMusicEnabled = !state.isMusicEnabled;
+  updateMusicButtonState();
+
+  if (!state.isMusicEnabled) {
+    stopBackgroundMusic();
+    return;
+  }
+
+  if (DOM.gamePanel.classList.contains("active") && !state.isAudioPenaltyActive) {
+    startBackgroundMusic();
+  }
 }
 
 function normalizeWord(raw) {
@@ -1143,6 +1175,8 @@ function attachEvents() {
 
   DOM.startGameBtn.addEventListener("click", startGame);
 
+  DOM.toggleMusicBtn.addEventListener("click", toggleMusic);
+
   DOM.playAudioBtn.addEventListener("click", async () => {
     if (!state.currentWord || state.isLocked || state.isAudioEasterEggPlaying || state.isAudioPenaltyActive) {
       return;
@@ -1284,6 +1318,7 @@ function init() {
   initMascotSetup();
   attachEvents();
   updateAudioButtonState();
+  updateMusicButtonState();
   if (DOM.mascotDanceOverlay) {
     DOM.mascotDanceOverlay.hidden = true;
   }
