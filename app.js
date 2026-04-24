@@ -824,10 +824,68 @@ function appendRenderedWordSegment(token, startIndex, mask, { revealAll = false 
     input.setAttribute("aria-label", `Letra ${index + 1}`);
     input.addEventListener("input", onLetterInput);
     input.addEventListener("keydown", onLetterKeyDown);
+    input.addEventListener("focus", onLetterFocus);
+    input.addEventListener("click", onLetterClick);
+    input.addEventListener("paste", onLetterPaste);
     segment.appendChild(input);
   }
 
   DOM.wordSlots.appendChild(segment);
+}
+
+function setCaretAtEnd(input) {
+  if (!input) {
+    return;
+  }
+
+  const len = input.value.length;
+  try {
+    input.setSelectionRange(len, len);
+  } catch {
+    // Ignore browsers/input modes that do not support selection ranges.
+  }
+}
+
+function focusInputAndPlaceCaretAtEnd(input) {
+  if (!input) {
+    return;
+  }
+
+  input.focus();
+  window.requestAnimationFrame(() => setCaretAtEnd(input));
+}
+
+function onLetterFocus(e) {
+  const target = e.target;
+  window.requestAnimationFrame(() => setCaretAtEnd(target));
+}
+
+function onLetterClick(e) {
+  const target = e.target;
+  window.requestAnimationFrame(() => setCaretAtEnd(target));
+}
+
+function onLetterPaste(e) {
+  e.preventDefault();
+  const target = e.target;
+  const pasted = (e.clipboardData?.getData("text") || "").replace(/[^a-zA-Z]/g, "").slice(0, 1).toUpperCase();
+  if (!pasted) {
+    return;
+  }
+
+  target.value = pasted;
+  target.classList.remove("wrong", "correct");
+  updateSubmitVisibility();
+
+  const all = [...DOM.wordSlots.querySelectorAll(".letter-input")];
+  const currentIndex = all.indexOf(target);
+  const next = all[currentIndex + 1];
+  if (next) {
+    focusInputAndPlaceCaretAtEnd(next);
+    return;
+  }
+
+  focusInputAndPlaceCaretAtEnd(target);
 }
 
 function updateThemeSelect() {
@@ -879,21 +937,68 @@ function initThemes() {
   updateThemeSelect();
 }
 
+function getWordSelectionWeight(word) {
+  const C = 2;
+  const stat = state.wordStats[word];
+  const t = stat ? stat.correct : 0;
+  const f = stat ? Math.max(0, stat.attempts - stat.correct) : 0;
+  const denominator = Math.max(1, (C * (1 + t)) - f);
+  let weight = C / denominator;
+  if (t === 0 && f === 0) {
+    weight *= 3;
+  }
+  return weight;
+}
+
+function pickWeightedWord(pool) {
+  if (!pool.length) {
+    return null;
+  }
+
+  const weights = pool.map((word) => Math.max(0, getWordSelectionWeight(word)));
+  const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+
+  if (totalWeight <= 0) {
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  let threshold = Math.random() * totalWeight;
+  for (let i = 0; i < pool.length; i += 1) {
+    threshold -= weights[i];
+    if (threshold <= 0) {
+      return pool[i];
+    }
+  }
+
+  return pool[pool.length - 1];
+}
+
 function chooseWordsForRound(themeWords, count) {
   if (themeWords.length === 0) {
     return [];
   }
-  if (themeWords.length >= count) {
-    return shuffle(themeWords).slice(0, count);
-  }
 
   const selected = [];
-  let idx = 0;
-  const bag = shuffle(themeWords);
+  let pool = [...themeWords];
+
   while (selected.length < count) {
-    selected.push(bag[idx % bag.length]);
-    idx += 1;
+    if (!pool.length) {
+      pool = [...themeWords];
+    }
+
+    const chosen = pickWeightedWord(pool);
+    if (!chosen) {
+      break;
+    }
+
+    selected.push(chosen);
+
+    const chosenIndex = pool.indexOf(chosen);
+    if (chosenIndex >= 0) {
+      pool.splice(chosenIndex, 1);
+    }
   }
+
   return selected;
 }
 
@@ -969,22 +1074,76 @@ function onLetterInput(e) {
     const currentIndex = all.indexOf(target);
     const next = all[currentIndex + 1];
     if (next) {
-      next.focus();
+      focusInputAndPlaceCaretAtEnd(next);
+      return;
     }
   }
+
+  focusInputAndPlaceCaretAtEnd(target);
 }
 
 function onLetterKeyDown(e) {
   const target = e.target;
-  if (e.key !== "Backspace" || target.value) {
+  const all = [...DOM.wordSlots.querySelectorAll(".letter-input")];
+  const currentIndex = all.indexOf(target);
+
+  if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+    e.preventDefault();
+    const step = e.key === "ArrowLeft" ? -1 : 1;
+    const nextInput = all[currentIndex + step];
+    if (nextInput) {
+      focusInputAndPlaceCaretAtEnd(nextInput);
+    } else {
+      focusInputAndPlaceCaretAtEnd(target);
+    }
     return;
   }
 
-  const all = [...DOM.wordSlots.querySelectorAll(".letter-input")];
-  const currentIndex = all.indexOf(target);
-  const prev = all[currentIndex - 1];
-  if (prev) {
-    prev.focus();
+  if (e.key === "Backspace" || e.key === "Delete") {
+    e.preventDefault();
+
+    if (target.value) {
+      target.value = "";
+      target.classList.remove("wrong", "correct");
+      updateSubmitVisibility();
+      focusInputAndPlaceCaretAtEnd(target);
+      return;
+    }
+
+    if (e.key === "Backspace") {
+      const prev = all[currentIndex - 1];
+      if (prev) {
+        prev.value = "";
+        prev.classList.remove("wrong", "correct");
+        updateSubmitVisibility();
+        focusInputAndPlaceCaretAtEnd(prev);
+      }
+    }
+    return;
+  }
+
+  if (e.ctrlKey || e.metaKey || e.altKey) {
+    return;
+  }
+
+  if (e.key.length === 1) {
+    e.preventDefault();
+    const replacement = e.key.replace(/[^a-zA-Z]/g, "").slice(0, 1).toUpperCase();
+    if (!replacement) {
+      return;
+    }
+
+    target.value = replacement;
+    target.classList.remove("wrong", "correct");
+    updateSubmitVisibility();
+
+    const next = all[currentIndex + 1];
+    if (next) {
+      focusInputAndPlaceCaretAtEnd(next);
+      return;
+    }
+
+    focusInputAndPlaceCaretAtEnd(target);
   }
 }
 
