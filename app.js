@@ -1,11 +1,21 @@
 const DOM = {
   setupPanel: document.getElementById("setupPanel"),
   gamePanel: document.getElementById("gamePanel"),
+  hud: document.querySelector(".hud"),
+  topbarSubtitle: document.getElementById("topbarSubtitle"),
   playerName: document.getElementById("playerName"),
   difficulty: document.getElementById("difficulty"),
+  settingsDifficulty: document.getElementById("settingsDifficulty"),
+  settingsMusicToggle: document.getElementById("settingsMusicToggle"),
+  configBtn: document.getElementById("configBtn"),
+  configModal: document.getElementById("configModal"),
+  closeConfigBtn: document.getElementById("closeConfigBtn"),
   themeSelect: document.getElementById("themeSelect"),
   startGameBtn: document.getElementById("startGameBtn"),
-  hudPlayer: document.getElementById("hudPlayer"),
+  hudThemePill: document.getElementById("hudThemePill"),
+  hudRoundPill: document.getElementById("hudRoundPill"),
+  hudCoinsPill: document.getElementById("hudCoinsPill"),
+  hudProgressPill: document.getElementById("hudProgressPill"),
   hudTheme: document.getElementById("hudTheme"),
   hudRound: document.getElementById("hudRound"),
   hudCoins: document.getElementById("hudCoins"),
@@ -26,7 +36,6 @@ const DOM = {
   mascotDanceOverlay: document.getElementById("mascotDanceOverlay"),
   mascotDanceStage: document.getElementById("mascotDanceStage"),
   statsBtn: document.getElementById("statsBtn"),
-  toggleMusicBtn: document.getElementById("toggleMusicBtn"),
   playAudioBtn: document.getElementById("playAudioBtn"),
   wordSlots: document.getElementById("wordSlots"),
   submitBtn: document.getElementById("submitBtn"),
@@ -158,15 +167,31 @@ function updateAudioButtonState() {
 }
 
 function updateMusicButtonState() {
-  if (!DOM.toggleMusicBtn) {
+  if (DOM.settingsMusicToggle) {
+    DOM.settingsMusicToggle.value = state.isMusicEnabled ? "on" : "off";
+  }
+}
+
+function updateDifficultyControlState() {
+  if (DOM.difficulty) {
+    DOM.difficulty.value = state.difficulty;
+  }
+  if (DOM.settingsDifficulty) {
+    DOM.settingsDifficulty.value = state.difficulty;
+  }
+}
+
+function updateTopbarSubtitle() {
+  if (!DOM.topbarSubtitle) {
     return;
   }
 
-  DOM.toggleMusicBtn.textContent = state.isMusicEnabled ? "♪ Música: On" : "♪ Música: Off";
-  DOM.toggleMusicBtn.setAttribute(
-    "aria-label",
-    state.isMusicEnabled ? "Desabilitar música" : "Habilitar música"
-  );
+  if (!state.playerName) {
+    DOM.topbarSubtitle.textContent = "Ouça, complete a palavra e avance de rodada.";
+    return;
+  }
+
+  DOM.topbarSubtitle.textContent = `${state.playerName}. Ouça, complete a rodada e avance.`;
 }
 
 function isAudioMutedByPenalty() {
@@ -688,7 +713,11 @@ function stopBackgroundMusic() {
 }
 
 function toggleMusic() {
-  state.isMusicEnabled = !state.isMusicEnabled;
+  setMusicEnabled(!state.isMusicEnabled);
+}
+
+function setMusicEnabled(enabled) {
+  state.isMusicEnabled = Boolean(enabled);
   updateMusicButtonState();
 
   if (!state.isMusicEnabled) {
@@ -726,6 +755,7 @@ function setPanel(showGame) {
   DOM.setupPanel.classList.toggle("active", !showGame);
   DOM.gamePanel.classList.toggle("active", showGame);
   updateCompactMode();
+  requestHudVisibilityUpdate();
 }
 
 function isLikelyMobile() {
@@ -734,17 +764,56 @@ function isLikelyMobile() {
 
 function updateCompactMode() {
   const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-  const keyboardLikelyOpen = window.visualViewport
-    ? window.innerHeight - window.visualViewport.height > 130
-    : false;
   const tightByHeight = viewportHeight < 660;
-  const shouldCompact = isLikelyMobile() && (tightByHeight || keyboardLikelyOpen);
+  const shouldCompact = isLikelyMobile() && tightByHeight;
   document.body.classList.toggle("tight-space", shouldCompact);
 }
 
 function handleViewportResize() {
   updateCompactMode();
+  updateHudBarVisibilityByPriority();
   updateSlotSize();
+}
+
+function requestHudVisibilityUpdate() {
+  window.requestAnimationFrame(() => {
+    updateHudBarVisibilityByPriority();
+  });
+}
+
+function updateHudBarVisibilityByPriority() {
+  if (!DOM.hud) {
+    return;
+  }
+
+  const priorityOrder = [
+    DOM.hudThemePill,
+    DOM.hudCoinsPill,
+    DOM.hudRoundPill,
+    DOM.hudProgressPill,
+    DOM.configBtn,
+    DOM.backToMenuBtn
+  ];
+
+  priorityOrder.forEach((el) => {
+    if (el) {
+      el.classList.remove("hud-hidden");
+    }
+  });
+
+  if (!DOM.gamePanel.classList.contains("active")) {
+    return;
+  }
+
+  for (let i = 0; i < priorityOrder.length; i += 1) {
+    if (DOM.hud.scrollWidth <= DOM.hud.clientWidth) {
+      break;
+    }
+    const el = priorityOrder[i];
+    if (el) {
+      el.classList.add("hud-hidden");
+    }
+  }
 }
 
 function updateSlotSize(wordText = "") {
@@ -1276,6 +1345,24 @@ function closeStatsModal() {
   DOM.statsModal.hidden = true;
 }
 
+function openConfigModal() {
+  if (!DOM.configModal) {
+    return;
+  }
+
+  updateMusicButtonState();
+  updateDifficultyControlState();
+  DOM.configModal.hidden = false;
+}
+
+function closeConfigModal() {
+  if (!DOM.configModal) {
+    return;
+  }
+
+  DOM.configModal.hidden = true;
+}
+
 function showFeedback(text, kind = "") {
   DOM.feedback.textContent = text;
   DOM.feedback.className = `feedback ${kind}`.trim();
@@ -1398,11 +1485,12 @@ function allRoundWordsSolved() {
 }
 
 function updateHud() {
-  DOM.hudPlayer.textContent = state.playerName;
+  updateTopbarSubtitle();
   DOM.hudTheme.textContent = state.selectedTheme;
   DOM.hudRound.textContent = String(state.roundNumber);
   updateCoinDisplays();
   renderRoundDots();
+  requestHudVisibilityUpdate();
 }
 
 function nextWordsPerRound() {
@@ -1548,6 +1636,7 @@ function startGame() {
   state.playerName = name;
   state.selectedTheme = theme;
   state.difficulty = DOM.difficulty.value;
+  updateDifficultyControlState();
   state.roundNumber = 1;
   state.wordsPerRound = 4;
 
@@ -1627,8 +1716,33 @@ function attachEvents() {
 
   DOM.startGameBtn.addEventListener("click", startGame);
 
-  if (DOM.toggleMusicBtn) {
-    DOM.toggleMusicBtn.addEventListener("click", toggleMusic);
+  if (DOM.configBtn) {
+    DOM.configBtn.addEventListener("click", openConfigModal);
+  }
+
+  if (DOM.closeConfigBtn) {
+    DOM.closeConfigBtn.addEventListener("click", closeConfigModal);
+  }
+
+  if (DOM.configModal) {
+    DOM.configModal.addEventListener("click", (e) => {
+      if (e.target === DOM.configModal) {
+        closeConfigModal();
+      }
+    });
+  }
+
+  if (DOM.settingsMusicToggle) {
+    DOM.settingsMusicToggle.addEventListener("change", (e) => {
+      setMusicEnabled(e.target.value === "on");
+    });
+  }
+
+  if (DOM.settingsDifficulty) {
+    DOM.settingsDifficulty.addEventListener("change", (e) => {
+      state.difficulty = e.target.value;
+      updateDifficultyControlState();
+    });
   }
 
   DOM.playAudioBtn.addEventListener("click", async () => {
@@ -1659,6 +1773,7 @@ function attachEvents() {
     setLocked(false);
     setPanel(false);
     closeShopModal();
+    closeConfigModal();
     renderShopAvatarPreview();
     updateCoinDisplays();
     showFeedback("");
@@ -1672,6 +1787,11 @@ function attachEvents() {
   });
 
   document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && DOM.configModal && !DOM.configModal.hidden) {
+      closeConfigModal();
+      return;
+    }
+
     if (e.key === "Escape" && DOM.shopModal && !DOM.shopModal.hidden) {
       closeShopModal();
       return;
@@ -1772,6 +1892,8 @@ function init() {
   attachEvents();
   updateAudioButtonState();
   updateMusicButtonState();
+  updateTopbarSubtitle();
+  updateDifficultyControlState();
   if (DOM.mascotDanceOverlay) {
     DOM.mascotDanceOverlay.hidden = true;
   }

@@ -17,7 +17,7 @@
   <main class="app-shell">
     <header class="topbar">
       <h1>Spelling Game Kids</h1>
-      <p>Ouça, complete a palavra e avance de rodada.</p>
+      <p id="topbarSubtitle">Ouça, complete a palavra e avance de rodada.</p>
     </header>
 
     <section id="setupPanel" class="panel active">
@@ -82,15 +82,43 @@
     <section id="gamePanel" class="panel">
       <div class="hud">
         <button id="backToMenuBtn" class="btn ghost back-btn">← Menu Voltar</button>
-        <button id="statsBtn" class="btn ghost stats-btn" aria-label="Abrir estatísticas">◔ Stats</button>
-        <button id="toggleMusicBtn" class="btn ghost music-btn" aria-label="Desabilitar música">♪ Música: On</button>
-        <div class="pill"><span>Jogador:</span> <strong id="hudPlayer">-</strong></div>
-        <div class="pill"><span>Tema:</span> <strong id="hudTheme">-</strong></div>
-        <div class="pill"><span>Rodada:</span> <strong id="hudRound">1</strong></div>
-        <div class="pill"><span>Moedas:</span> <strong id="hudCoins">0</strong></div>
-        <div class="pill progress-pill">
+        <button id="configBtn" class="btn ghost gear-btn" aria-label="Abrir configurações">⚙</button>
+        <div id="hudThemePill" class="pill"><span>Tema:</span> <strong id="hudTheme">-</strong></div>
+        <div id="hudRoundPill" class="pill round-stats-pill">
+          <span>Rodada:</span>
+          <strong id="hudRound">1</strong>
+          <button id="statsBtn" class="mini-icon-btn" type="button" aria-label="Abrir estatísticas">◔</button>
+        </div>
+        <div id="hudCoinsPill" class="pill"><span>Moedas:</span> <strong id="hudCoins">0</strong></div>
+        <div id="hudProgressPill" class="pill progress-pill">
           <span>Palavras:</span>
           <div id="roundDots" class="round-dots" aria-label="Progresso das palavras da rodada"></div>
+        </div>
+      </div>
+
+      <div id="configModal" class="stats-modal config-modal" hidden>
+        <div class="stats-panel config-panel" role="dialog" aria-modal="true" aria-labelledby="configTitle">
+          <div class="stats-head">
+            <h3 id="configTitle">Configurações</h3>
+            <button id="closeConfigBtn" class="btn ghost stats-close-btn" aria-label="Fechar configurações">Fechar</button>
+          </div>
+
+          <label class="field">
+            <span>Música</span>
+            <select id="settingsMusicToggle">
+              <option value="on">Ligada</option>
+              <option value="off">Desligada</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Nível</span>
+            <select id="settingsDifficulty">
+              <option value="easy">Fácil</option>
+              <option value="medium">Médio</option>
+              <option value="hard">Difícil</option>
+            </select>
+          </label>
         </div>
       </div>
 
