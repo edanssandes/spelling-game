@@ -706,7 +706,9 @@ function normalizeWord(raw) {
     .toLowerCase()
     .trim()
     .replace(/\.mp3$/i, "")
-    .replace(/[^a-z\s]/g, " ")
+    .replace(/[^a-z\s-]/g, " ")
+    .replace(/\s*-\s*/g, "-")
+    .replace(/-{2,}/g, "-")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -751,10 +753,11 @@ function updateSlotSize(wordText = "") {
   }
 
   const sourceWord = (wordText || state.currentWord || "").toLowerCase();
-  const lettersOnly = sourceWord.replace(/\s/g, "");
+  const lettersOnly = sourceWord.replace(/[\s-]/g, "");
   const spacesCount = (sourceWord.match(/\s/g) || []).length;
+  const hyphenCount = (sourceWord.match(/-/g) || []).length;
   const slots = Math.max(1, lettersOnly.length || DOM.wordSlots.querySelectorAll(".slot, .letter-input").length || 1);
-  const visualUnits = slots + spacesCount * 0.55;
+  const visualUnits = slots + spacesCount * 0.55 + hyphenCount * 0.38;
   const hasSpaces = spacesCount > 0;
   const containerWidth = DOM.wordCard ? DOM.wordCard.clientWidth : window.innerWidth;
   const gap = Math.max(6, Math.min(10, Math.floor(containerWidth * 0.018)));
@@ -763,9 +766,9 @@ function updateSlotSize(wordText = "") {
   const usableWidth = Math.max(180, containerWidth - horizontalPadding - safety);
 
   const minSingleLineSize = isLikelyMobile() ? 26 : 30;
-  const visualElements = Math.max(1, slots + spacesCount);
+  const visualElements = Math.max(1, slots + spacesCount + hyphenCount);
   const singleLineComputed = Math.floor((usableWidth - (visualElements - 1) * gap) / visualUnits);
-  const canStaySingleLine = slots <= 12 && singleLineComputed >= minSingleLineSize;
+  const canStaySingleLine = slots + hyphenCount <= 12 && singleLineComputed >= minSingleLineSize;
 
   let size;
   if (canStaySingleLine) {
@@ -782,6 +785,49 @@ function updateSlotSize(wordText = "") {
 
   DOM.wordSlots.style.setProperty("--slot-size", `${size}px`);
   DOM.wordSlots.style.setProperty("--slot-gap", `${gap}px`);
+}
+
+function appendRenderedWordSegment(token, startIndex, mask, { revealAll = false } = {}) {
+  const segment = document.createElement("div");
+  segment.className = "word-segment";
+
+  for (let offset = 0; offset < token.length; offset += 1) {
+    const ch = token[offset];
+    const index = startIndex + offset;
+
+    if (ch === "-") {
+      const hyphen = document.createElement("div");
+      hyphen.className = "hyphen-slot";
+      hyphen.dataset.index = String(index);
+      hyphen.setAttribute("aria-hidden", "true");
+      segment.appendChild(hyphen);
+      continue;
+    }
+
+    if (revealAll || mask[index]) {
+      const slot = document.createElement("div");
+      slot.className = revealAll ? "slot all-correct" : "slot";
+      slot.dataset.index = String(index);
+      slot.textContent = ch.toUpperCase();
+      segment.appendChild(slot);
+      continue;
+    }
+
+    const input = document.createElement("input");
+    input.className = "letter-input";
+    input.type = "text";
+    input.maxLength = 1;
+    input.inputMode = "text";
+    input.autocomplete = "off";
+    input.spellcheck = false;
+    input.dataset.index = String(index);
+    input.setAttribute("aria-label", `Letra ${index + 1}`);
+    input.addEventListener("input", onLetterInput);
+    input.addEventListener("keydown", onLetterKeyDown);
+    segment.appendChild(input);
+  }
+
+  DOM.wordSlots.appendChild(segment);
 }
 
 function updateThemeSelect() {
@@ -889,37 +935,22 @@ function renderWordInputs(word, mask) {
   DOM.wordSlots.innerHTML = "";
   updateSlotSize(word);
 
-  for (let i = 0; i < word.length; i += 1) {
-    if (word[i] === " ") {
+  let index = 0;
+  const tokens = word.split(" ");
+
+  tokens.forEach((token, tokenIndex) => {
+    appendRenderedWordSegment(token, index, mask);
+    index += token.length;
+
+    if (tokenIndex < tokens.length - 1) {
       const spacer = document.createElement("div");
       spacer.className = "space-slot";
-      spacer.dataset.index = String(i);
+      spacer.dataset.index = String(index);
       spacer.setAttribute("aria-hidden", "true");
       DOM.wordSlots.appendChild(spacer);
-      continue;
+      index += 1;
     }
-
-    if (mask[i]) {
-      const slot = document.createElement("div");
-      slot.className = "slot";
-      slot.dataset.index = String(i);
-      slot.textContent = word[i].toUpperCase();
-      DOM.wordSlots.appendChild(slot);
-    } else {
-      const input = document.createElement("input");
-      input.className = "letter-input";
-      input.type = "text";
-      input.maxLength = 1;
-      input.inputMode = "text";
-      input.autocomplete = "off";
-      input.spellcheck = false;
-      input.dataset.index = String(i);
-      input.setAttribute("aria-label", `Letra ${i + 1}`);
-      input.addEventListener("input", onLetterInput);
-      input.addEventListener("keydown", onLetterKeyDown);
-      DOM.wordSlots.appendChild(input);
-    }
-  }
+  });
 
   const firstBlank = DOM.wordSlots.querySelector(".letter-input");
   if (firstBlank) {
@@ -963,10 +994,17 @@ function getTypedWord() {
   for (const node of children) {
     if (node.classList.contains("space-slot")) {
       chars.push(" ");
-    } else if (node.classList.contains("slot")) {
-      chars.push(node.textContent.toLowerCase());
     } else {
-      chars.push((node.value || "").toLowerCase());
+      const segmentChildren = [...node.children];
+      for (const segmentNode of segmentChildren) {
+        if (segmentNode.classList.contains("hyphen-slot")) {
+          chars.push("-");
+        } else if (segmentNode.classList.contains("slot")) {
+          chars.push(segmentNode.textContent.toLowerCase());
+        } else {
+          chars.push((segmentNode.value || "").toLowerCase());
+        }
+      }
     }
   }
   return chars.join("");
@@ -1139,34 +1177,35 @@ function setLocked(locked) {
 }
 
 function markWrongLetters(targetWord) {
-  const children = [...DOM.wordSlots.children];
-  children.forEach((node) => {
+  const inputs = [...DOM.wordSlots.querySelectorAll(".letter-input")];
+  inputs.forEach((node) => {
     const idx = Number(node.dataset.index);
     const expected = targetWord[idx]?.toUpperCase() || "";
-    if (node.classList.contains("letter-input")) {
-      const value = (node.value || "").toUpperCase();
-      node.classList.toggle("wrong", value !== expected);
-      node.classList.toggle("correct", value === expected);
-    }
+    const value = (node.value || "").toUpperCase();
+    node.classList.toggle("wrong", value !== expected);
+    node.classList.toggle("correct", value === expected);
   });
 }
 
 function revealCorrectWord(word) {
   DOM.wordSlots.innerHTML = "";
-  for (const ch of word) {
-    if (ch === " ") {
+  updateSlotSize(word);
+
+  let index = 0;
+  const tokens = word.split(" ");
+  tokens.forEach((token, tokenIndex) => {
+    appendRenderedWordSegment(token, index, [], { revealAll: true });
+    index += token.length;
+
+    if (tokenIndex < tokens.length - 1) {
       const spacer = document.createElement("div");
       spacer.className = "space-slot";
       spacer.setAttribute("aria-hidden", "true");
       DOM.wordSlots.appendChild(spacer);
-      continue;
+      index += 1;
     }
+  });
 
-    const slot = document.createElement("div");
-    slot.className = "slot all-correct";
-    slot.textContent = ch.toUpperCase();
-    DOM.wordSlots.appendChild(slot);
-  }
   updateSubmitVisibility();
 }
 

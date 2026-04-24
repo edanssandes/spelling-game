@@ -529,10 +529,37 @@ select:focus {
   justify-content: center;
 }
 
+.word-segment {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--slot-gap);
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
 .space-slot {
   width: calc(var(--slot-size) * 0.48);
   height: var(--slot-size);
   flex: 0 0 auto;
+}
+
+.hyphen-slot {
+  position: relative;
+  width: calc(var(--slot-size) * 0.42);
+  height: var(--slot-size);
+  flex: 0 0 auto;
+}
+
+.hyphen-slot::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: max(2px, calc(var(--slot-border) * 1.6));
+  transform: translateY(-50%);
+  border-radius: 999px;
+  background: #8aa0cf;
 }
 
 .slot,
