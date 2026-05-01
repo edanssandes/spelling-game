@@ -563,6 +563,19 @@ select:focus {
   flex-wrap: nowrap;
 }
 
+.word-slots.scrollable-row {
+  justify-content: flex-start;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 2px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.word-slots.scrollable-row::-webkit-scrollbar {
+  display: none;
+}
+
 .word-slots.break-at-space {
   justify-content: center;
 }

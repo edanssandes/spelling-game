@@ -828,27 +828,34 @@ function updateSlotSize(wordText = "") {
   const slots = Math.max(1, lettersOnly.length || DOM.wordSlots.querySelectorAll(".slot, .letter-input").length || 1);
   const visualUnits = slots + spacesCount * 0.55 + hyphenCount * 0.38;
   const hasSpaces = spacesCount > 0;
+  const isLongSingleWord = !hasSpaces && slots + hyphenCount >= 9;
   const containerWidth = DOM.wordCard ? DOM.wordCard.clientWidth : window.innerWidth;
-  const gap = Math.max(6, Math.min(10, Math.floor(containerWidth * 0.018)));
+  const minGap = isLongSingleWord ? 4 : 6;
+  const gap = Math.max(minGap, Math.min(10, Math.floor(containerWidth * 0.018)));
   const horizontalPadding = isLikelyMobile() ? 22 : 30;
   const safety = 12;
   const usableWidth = Math.max(180, containerWidth - horizontalPadding - safety);
 
-  const minSingleLineSize = isLikelyMobile() ? 26 : 30;
+  const minSingleLineSize = isLikelyMobile()
+    ? (isLongSingleWord ? 18 : 26)
+    : (isLongSingleWord ? 22 : 30);
   const visualElements = Math.max(1, slots + spacesCount + hyphenCount);
   const singleLineComputed = Math.floor((usableWidth - (visualElements - 1) * gap) / visualUnits);
-  const canStaySingleLine = slots + hyphenCount <= 12 && singleLineComputed >= minSingleLineSize;
+  const canStaySingleLine = (!hasSpaces && singleLineComputed >= minSingleLineSize)
+    || (slots + hyphenCount <= 12 && singleLineComputed >= minSingleLineSize);
 
   let size;
   if (canStaySingleLine) {
     size = Math.max(minSingleLineSize, Math.min(58, singleLineComputed));
     DOM.wordSlots.classList.add("single-row");
+    DOM.wordSlots.classList.toggle("scrollable-row", isLongSingleWord && singleLineComputed <= minSingleLineSize + 1);
     DOM.wordSlots.classList.remove("break-at-space");
   } else {
     const maxSlotsInRow = isLikelyMobile() ? Math.min(slots, 8) : Math.min(slots, 10);
     const wrappedComputed = Math.floor((usableWidth - (maxSlotsInRow - 1) * gap) / maxSlotsInRow);
-    size = Math.max(26, Math.min(58, wrappedComputed));
+    size = Math.max(isLikelyMobile() ? 20 : 24, Math.min(58, wrappedComputed));
     DOM.wordSlots.classList.remove("single-row");
+    DOM.wordSlots.classList.remove("scrollable-row");
     DOM.wordSlots.classList.toggle("break-at-space", hasSpaces && isLikelyMobile());
   }
 
