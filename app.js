@@ -125,6 +125,24 @@ const MASCOT_CATALOG = {
     base: "#9be0ff",
     accent: "#2f6db4",
     ear: "#1f4f87"
+  },
+  dog: {
+    label: "Bidu Cachorro",
+    base: "#c98b52",
+    accent: "#f8dcb8",
+    ear: "#8d5a2b"
+  },
+  cat: {
+    label: "Mimi Gato",
+    base: "#f4b75f",
+    accent: "#ffe7bf",
+    ear: "#c97f39"
+  },
+  turtle: {
+    label: "Tito Tartaruga",
+    base: "#6acb7a",
+    accent: "#d5f4cf",
+    ear: "#3f9655"
   }
 };
 const SHOP_ITEMS = [
