@@ -234,6 +234,7 @@ function createMascotAvatar({ mascotId = state.mascotId, pose = "front", dancing
   avatar.innerHTML = `
     <div class="mascot-shadow"></div>
     <div class="mascot-body"></div>
+    <div class="mascot-shell"></div>
     <div class="mascot-head">
       <div class="mascot-ear ear-left"></div>
       <div class="mascot-ear ear-right"></div>
@@ -241,6 +242,8 @@ function createMascotAvatar({ mascotId = state.mascotId, pose = "front", dancing
       <div class="mascot-eye eye-right"></div>
       <div class="mascot-blush blush-left"></div>
       <div class="mascot-blush blush-right"></div>
+      <div class="mascot-muzzle"></div>
+      <div class="mascot-whiskers"></div>
       <div class="mascot-mouth"></div>
       <div class="mascot-visor"></div>
       <div class="mascot-antenna"></div>

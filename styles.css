@@ -847,11 +847,148 @@ select:focus {
 
 .mascot-visor,
 .mascot-antenna,
+.mascot-shell,
+.mascot-muzzle,
+.mascot-whiskers,
 .mascot-outfit-layer,
 .mascot-hat,
 .mascot-glasses {
   position: absolute;
   pointer-events: none;
+}
+
+.mascot-muzzle,
+.mascot-whiskers,
+.mascot-shell {
+  display: none;
+}
+
+.mascot-dog .mascot-ear {
+  width: 32px;
+  height: 42px;
+  border-radius: 52% 52% 36% 36%;
+  top: -10px;
+}
+
+.mascot-dog .mascot-ear.ear-left {
+  left: 7px;
+  transform: rotate(-28deg);
+}
+
+.mascot-dog .mascot-ear.ear-right {
+  right: 7px;
+  transform: rotate(28deg);
+}
+
+.mascot-dog .mascot-muzzle {
+  display: block;
+  left: 50%;
+  top: 62px;
+  width: 40px;
+  height: 25px;
+  transform: translateX(-50%);
+  border-radius: 44% 44% 52% 52%;
+  background: var(--mascot-accent);
+  border: 2px solid rgba(22, 40, 60, 0.16);
+}
+
+.mascot-dog .mascot-mouth {
+  top: 72px;
+  width: 20px;
+}
+
+.mascot-cat .mascot-ear {
+  width: 28px;
+  height: 32px;
+  border-radius: 56% 56% 10% 10%;
+  top: -16px;
+  clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+}
+
+.mascot-cat .mascot-ear.ear-left {
+  left: 10px;
+  transform: rotate(-12deg);
+}
+
+.mascot-cat .mascot-ear.ear-right {
+  right: 10px;
+  transform: rotate(12deg);
+}
+
+.mascot-cat .mascot-whiskers {
+  display: block;
+  left: 50%;
+  top: 68px;
+  width: 66px;
+  height: 12px;
+  transform: translateX(-50%);
+}
+
+.mascot-cat .mascot-whiskers::before,
+.mascot-cat .mascot-whiskers::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 30px;
+  height: 12px;
+  border-top: 2px solid rgba(24, 39, 59, 0.66);
+}
+
+.mascot-cat .mascot-whiskers::before {
+  left: 0;
+  transform: rotate(-8deg);
+}
+
+.mascot-cat .mascot-whiskers::after {
+  right: 0;
+  transform: rotate(8deg);
+}
+
+.mascot-cat .mascot-whiskers {
+  background:
+    linear-gradient(180deg, transparent 45%, rgba(24, 39, 59, 0.72) 46%, rgba(24, 39, 59, 0.72) 54%, transparent 55%);
+}
+
+.mascot-cat .mascot-muzzle {
+  display: block;
+  left: 50%;
+  top: 61px;
+  width: 34px;
+  height: 22px;
+  transform: translateX(-50%);
+  border-radius: 46%;
+  background: var(--mascot-accent);
+  border: 2px solid rgba(22, 40, 60, 0.12);
+}
+
+.mascot-turtle .mascot-ear {
+  display: none;
+}
+
+.mascot-turtle .mascot-head {
+  border-radius: 40% 40% 46% 46%;
+}
+
+.mascot-turtle .mascot-shell {
+  display: block;
+  left: 50%;
+  bottom: 30px;
+  width: 118px;
+  height: 96px;
+  transform: translateX(-50%);
+  border-radius: 52% 52% 45% 45%;
+  border: 3px solid rgba(22, 40, 60, 0.2);
+  background:
+    radial-gradient(circle at 50% 50%, rgba(232, 195, 125, 0.74) 0 18px, transparent 20px),
+    radial-gradient(circle at 25% 28%, rgba(232, 195, 125, 0.55) 0 12px, transparent 14px),
+    radial-gradient(circle at 74% 28%, rgba(232, 195, 125, 0.55) 0 12px, transparent 14px),
+    radial-gradient(circle at 22% 72%, rgba(232, 195, 125, 0.52) 0 12px, transparent 14px),
+    radial-gradient(circle at 78% 72%, rgba(232, 195, 125, 0.52) 0 12px, transparent 14px),
+    linear-gradient(180deg, #5fa764 0%, #3f7f45 100%);
+}
+
+.mascot-turtle .mascot-body {
+  background: linear-gradient(180deg, #75d586 0%, #50af62 100%);
 }
 
 .mascot-robot .mascot-visor {
