@@ -243,7 +243,14 @@ function createMascotAvatar({ mascotId = state.mascotId, pose = "front", dancing
       <div class="mascot-blush blush-left"></div>
       <div class="mascot-blush blush-right"></div>
       <div class="mascot-muzzle"></div>
-      <div class="mascot-whiskers"></div>
+      <div class="mascot-whiskers">
+        <span class="w wl w1"></span>
+        <span class="w wl w2"></span>
+        <span class="w wl w3"></span>
+        <span class="w wr w1"></span>
+        <span class="w wr w2"></span>
+        <span class="w wr w3"></span>
+      </div>
       <div class="mascot-mouth"></div>
       <div class="mascot-visor"></div>
       <div class="mascot-antenna"></div>

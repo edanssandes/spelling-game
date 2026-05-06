@@ -880,6 +880,10 @@ select:focus {
   transform: rotate(28deg);
 }
 
+.mascot-dog .mascot-blush {
+  display: none;
+}
+
 .mascot-dog .mascot-muzzle {
   display: block;
   left: 50%;
@@ -915,39 +919,48 @@ select:focus {
   transform: rotate(12deg);
 }
 
+.mascot-cat .mascot-blush {
+  display: none;
+}
+
 .mascot-cat .mascot-whiskers {
   display: block;
   left: 50%;
-  top: 68px;
-  width: 66px;
-  height: 12px;
+  top: 72px;
+  width: 88px;
+  height: 2px;
   transform: translateX(-50%);
+  background: none;
 }
 
-.mascot-cat .mascot-whiskers::before,
-.mascot-cat .mascot-whiskers::after {
-  content: "";
+.mascot-cat .mascot-whiskers .w {
   position: absolute;
   top: 0;
-  width: 30px;
-  height: 12px;
-  border-top: 2px solid rgba(24, 39, 59, 0.66);
+  width: 36px;
+  height: 2px;
+  background: none;
+  border-radius: 2px;
 }
 
-.mascot-cat .mascot-whiskers::before {
-  left: 0;
-  transform: rotate(-8deg);
+.mascot-cat .mascot-whiskers .wl {
+  right: 50%;
+  transform-origin: 100% 50%;
+  background: linear-gradient(to left, transparent 0 40%, rgba(24, 39, 59, 0.68) 20% 100%);
 }
 
-.mascot-cat .mascot-whiskers::after {
-  right: 0;
-  transform: rotate(8deg);
+.mascot-cat .mascot-whiskers .wr {
+  left: 50%;
+  transform-origin: 0% 50%;
+  background: linear-gradient(to right, transparent 0 40%, rgba(24, 39, 59, 0.68) 20% 100%);
 }
 
-.mascot-cat .mascot-whiskers {
-  background:
-    linear-gradient(180deg, transparent 45%, rgba(24, 39, 59, 0.72) 46%, rgba(24, 39, 59, 0.72) 54%, transparent 55%);
-}
+.mascot-cat .mascot-whiskers .wl.w1 { transform: rotate(-15deg); }
+.mascot-cat .mascot-whiskers .wl.w2 { transform: rotate(0deg); }
+.mascot-cat .mascot-whiskers .wl.w3 { transform: rotate(15deg); }
+
+.mascot-cat .mascot-whiskers .wr.w1 { transform: rotate(15deg); }
+.mascot-cat .mascot-whiskers .wr.w2 { transform: rotate(0deg); }
+.mascot-cat .mascot-whiskers .wr.w3 { transform: rotate(-15deg); }
 
 .mascot-cat .mascot-muzzle {
   display: block;
@@ -962,6 +975,10 @@ select:focus {
 }
 
 .mascot-turtle .mascot-ear {
+  display: none;
+}
+
+.mascot-turtle .mascot-blush {
   display: none;
 }
 
