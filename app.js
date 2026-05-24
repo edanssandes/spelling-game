@@ -90,7 +90,7 @@ const SOUND_PATHS = {
   success: "sounds/success.mp3",
   error: "sounds/error.mp3",
   applause: "sounds/applause.mp3",
-  bgm: "sounds/bgm_calm.mp3"
+  bgm: "sounds/bgm_kids_fun.mp3"
 };
 
 const SOUND_VOLUMES = {
