@@ -762,8 +762,9 @@ function normalizeWord(raw) {
   return raw
     .toLowerCase()
     .trim()
+    .replace(/[’]/g, "'")
     .replace(/\.mp3$/i, "")
-    .replace(/[^a-z\s-]/g, " ")
+    .replace(/[^a-z\s'\-?!.,]/g, " ")
     .replace(/\s*-\s*/g, "-")
     .replace(/-{2,}/g, "-")
     .replace(/\s+/g, " ")
@@ -850,11 +851,12 @@ function updateSlotSize(wordText = "") {
   }
 
   const sourceWord = (wordText || state.currentWord || "").toLowerCase();
-  const lettersOnly = sourceWord.replace(/[\s-]/g, "");
+  const lettersOnly = sourceWord.replace(/[^a-z]/g, "");
   const spacesCount = (sourceWord.match(/\s/g) || []).length;
   const hyphenCount = (sourceWord.match(/-/g) || []).length;
+  const punctCount = (sourceWord.match(/[^a-z\s-]/g) || []).length;
   const slots = Math.max(1, lettersOnly.length || DOM.wordSlots.querySelectorAll(".slot, .letter-input").length || 1);
-  const visualUnits = slots + spacesCount * 0.55 + hyphenCount * 0.38;
+  const visualUnits = slots + spacesCount * 0.55 + hyphenCount * 0.38 + punctCount * 0.4;
   const hasSpaces = spacesCount > 0;
   const isLongSingleWord = !hasSpaces && slots + hyphenCount >= 9;
   const containerWidth = DOM.wordCard ? DOM.wordCard.clientWidth : window.innerWidth;
@@ -905,6 +907,16 @@ function appendRenderedWordSegment(token, startIndex, mask, { revealAll = false 
       hyphen.dataset.index = String(index);
       hyphen.setAttribute("aria-hidden", "true");
       segment.appendChild(hyphen);
+      continue;
+    }
+
+    if (!/[a-z]/i.test(ch)) {
+      const punct = document.createElement("div");
+      punct.className = "punct-slot";
+      punct.dataset.index = String(index);
+      punct.textContent = ch;
+      punct.setAttribute("aria-hidden", "true");
+      segment.appendChild(punct);
       continue;
     }
 
@@ -1262,6 +1274,8 @@ function getTypedWord() {
       for (const segmentNode of segmentChildren) {
         if (segmentNode.classList.contains("hyphen-slot")) {
           chars.push("-");
+        } else if (segmentNode.classList.contains("punct-slot")) {
+          chars.push(segmentNode.textContent.toLowerCase());
         } else if (segmentNode.classList.contains("slot")) {
           chars.push(segmentNode.textContent.toLowerCase());
         } else {

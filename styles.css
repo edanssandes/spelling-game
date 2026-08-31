@@ -613,6 +613,19 @@ select:focus {
   background: #8aa0cf;
 }
 
+.punct-slot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(var(--slot-size) * 0.4);
+  height: var(--slot-size);
+  flex: 0 0 auto;
+  font-size: clamp(0.9rem, calc(var(--slot-size) * 0.5), 1.7rem);
+  font-weight: 800;
+  color: #56618a;
+  line-height: 1;
+}
+
 .slot,
 .letter-input {
   width: var(--slot-size);
