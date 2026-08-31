@@ -1409,8 +1409,9 @@ async function playWordAudio(word) {
     return;
   }
 
+  const audioKey = word.toLowerCase().replace(/[^a-z]/g, "");
   await new Promise((resolve) => {
-    const audio = new Audio(`audios/${word}.mp3`);
+    const audio = new Audio(`audios/${audioKey}.mp3`);
     audio.addEventListener("canplaythrough", () => {
       audio.play().then(resolve).catch(() => { speakWord(word); resolve(); });
     }, { once: true });
