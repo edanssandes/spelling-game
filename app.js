@@ -101,6 +101,8 @@ const SOUND_VOLUMES = {
   bgm: 0.15
 };
 
+const WRONG_ANSWER_DISPLAY_MS = 2000;
+const CORRECT_ANSWER_DISPLAY_MS = 5000;
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const EASTER_EGG_WINDOW_MS = 5000;
 const EASTER_EGG_TRIGGER_CLICKS = 10;
@@ -893,7 +895,7 @@ function updateSlotSize(wordText = "") {
   DOM.wordSlots.style.setProperty("--slot-gap", `${gap}px`);
 }
 
-function appendRenderedWordSegment(token, startIndex, mask, { revealAll = false } = {}) {
+function appendRenderedWordSegment(token, startIndex, mask, { revealAll = false, highlightedIndexes = new Set() } = {}) {
   const segment = document.createElement("div");
   segment.className = "word-segment";
 
@@ -922,7 +924,7 @@ function appendRenderedWordSegment(token, startIndex, mask, { revealAll = false 
 
     if (revealAll || mask[index]) {
       const slot = document.createElement("div");
-      slot.className = revealAll ? "slot all-correct" : "slot";
+      slot.className = revealAll && highlightedIndexes.has(index) ? "slot all-correct" : "slot";
       slot.dataset.index = String(index);
       slot.textContent = ch.toUpperCase();
       segment.appendChild(slot);
@@ -1483,14 +1485,29 @@ function markWrongLetters(targetWord) {
   });
 }
 
-function revealCorrectWord(word) {
+function getCorrectedLetterIndexes(typedWord, targetWord) {
+  const typed = (typedWord || "").toUpperCase();
+  const target = (targetWord || "").toUpperCase();
+  const indexes = [];
+
+  for (let i = 0; i < Math.max(typed.length, target.length); i += 1) {
+    if (typed[i] !== target[i]) {
+      indexes.push(i);
+    }
+  }
+
+  return indexes;
+}
+
+function revealCorrectWord(word, highlightedIndexes = []) {
   DOM.wordSlots.innerHTML = "";
   updateSlotSize(word);
 
+  const highlightSet = new Set(highlightedIndexes.map((idx) => Number(idx)));
   let index = 0;
   const tokens = word.split(" ");
   tokens.forEach((token, tokenIndex) => {
-    appendRenderedWordSegment(token, index, [], { revealAll: true });
+    appendRenderedWordSegment(token, index, [], { revealAll: true, highlightedIndexes: highlightSet });
     index += token.length;
 
     if (tokenIndex < tokens.length - 1) {
@@ -1649,9 +1666,11 @@ async function handleSubmit() {
   await wait(700);
   DOM.wordCard.classList.remove("earthquake");
 
-  revealCorrectWord(target);
+  const correctedIndexes = getCorrectedLetterIndexes(typed, target);
+  await wait(WRONG_ANSWER_DISPLAY_MS);
+  revealCorrectWord(target, correctedIndexes);
   showFeedback(`Resposta correta: ${target.toUpperCase()}`, "ok");
-  await wait(1200);
+  await wait(CORRECT_ANSWER_DISPLAY_MS);
   await loadNextWord();
 }
 

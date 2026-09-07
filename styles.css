@@ -674,15 +674,51 @@ select:focus {
 }
 
 .letter-input.wrong {
-  border-color: #ff8f8f;
-  color: var(--danger);
-  background: #fff0f0;
+  border-color: #ff4d5c;
+  color: #b91f35;
+  background: linear-gradient(180deg, #fff2f2 0%, #ffe0e5 100%);
+  box-shadow: 0 0 0 2px rgba(255, 77, 92, 0.12), 0 8px 18px rgba(255, 77, 92, 0.15);
+  font-size: 1.18em;
+  font-weight: 900;
+  transform: translateY(-1px);
+  animation: wrong-letter-flash 0.38s ease-in-out 2 alternate;
 }
 
 .slot.all-correct {
-  color: var(--success);
-  border-color: #90d39e;
-  background: #ebffe8;
+  color: #0d7a3c;
+  border-color: #42d36d;
+  background: linear-gradient(180deg, #ebfff1 0%, #cfeecf 100%);
+  box-shadow: 0 0 0 2px rgba(66, 211, 109, 0.14), 0 12px 22px rgba(66, 211, 109, 0.18);
+  font-size: 1.16em;
+  font-weight: 900;
+  animation: corrected-letter-pulse 1s ease-in-out infinite;
+}
+
+@keyframes corrected-letter-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(1.18);
+    filter: brightness(1.08);
+  }
+}
+
+@keyframes wrong-letter-flash {
+  0% {
+    background: linear-gradient(180deg, #fff7f7 0%, #ffdfe5 100%);
+    transform: scale(1);
+  }
+  50% {
+    background: linear-gradient(180deg, #ffe0e6 0%, #ff9aad 100%);
+    transform: scale(1.06);
+  }
+  100% {
+    background: linear-gradient(180deg, #fff2f2 0%, #ffe0e5 100%);
+    transform: scale(1);
+  }
 }
 
 .actions {
